@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# ReportARG
 
-## Getting Started
+**Proyecto Final - Práctica Profesionalizante I**  
+**Instituto Superior Santo Domingo**  
+**Carrera:** Desarrollo de Software  
+**Profesora:** Nadia Gallardo  
+**Año:** 2025
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 📘 Descripción del Proyecto
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**ReportARG** es un sistema de información que busca **mejorar la comunicación y la participación ciudadana** en los barrios, permitiendo conectar a vecinos, instituciones y organizaciones mediante una aplicación.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+El objetivo principal es **centralizar la información local** —como cortes de servicios, reclamos, alertas, eventos y campañas de salud— en una plataforma única, accesible y confiable para toda la comunidad.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 🎯 Objetivos del Sistema
 
-To learn more about Next.js, take a look at the following resources:
+- Facilitar la **difusión de información** oficial y vecinal.  
+- Permitir **denuncias y reclamos** con fotos y ubicación geográfica.  
+- Fomentar la **organización comunitaria** a través de foros o grupos temáticos.  
+- Brindar acceso a **notificaciones en tiempo real** sobre servicios, emergencias y actividades.  
+- Integrar **instituciones oficiales** (municipio, policía, hospitales, etc.) para publicar información verificada.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## ⚙️ Tecnologías Utilizadas (Sprint 0)
 
-## Deploy on Vercel
+Durante el **Sprint 0** se definió el entorno de desarrollo y las herramientas de trabajo:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 💻 Lenguajes y Frameworks
+- **Frontend:** JavaScript  
+- **Frameworks y Librerías:** 
+  - Frontend: React 
+  - Backend: Express.js 
+  - Diseño y Estilos: Tailwind CSS   
+- **Backend:** Node.js  
+- **Base de datos:** MySQL 
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 🧰 Herramientas
+- **Editor de código:** Visual Studio Code  
+- **Control de versiones:** Git + GitHub  
+- **Gestión de tareas:** Trello  
+- **Pruebas locales:** XAMPP / Node.js  
+- **Navegador de pruebas:** Google Chrome  
+
