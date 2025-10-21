@@ -2,10 +2,9 @@
 
 **Proyecto Final - Práctica Profesionalizante I**  
 **Instituto Superior Santo Domingo**  
-**Carrera:** Desarrollo de Software  
+**Carrera:** Tecnicatura Superior en Desarrollo de Software  
 **Profesora:** Nadia Gallardo  
 **Alumnos:** Julieta Landra, Ana Valentina Vargas, Ludmila Mansilla y Juan Manuel Emiliani 
-  
 **Año:** 2025
 
 ---
