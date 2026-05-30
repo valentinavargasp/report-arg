@@ -78,9 +78,9 @@ export default function UserTable() {
       {confirmDelete && (
         <div className="users-modal-backdrop">
           <div className="users-modal-card">
-            <h3 className="users-modal-title">¿Eliminar usuario?</h3>
+            <h3 className="users-modal-title">¿Dar de baja al usuario?</h3>
             <p className="users-modal-text">
-              Esta acción no se puede deshacer. Se eliminará a <strong>{confirmDelete.nombre}</strong>.
+              El usuario <strong>{confirmDelete.nombre}</strong> quedará inactivo y no podrá iniciar sesión. Sus datos se conservan y la acción puede revertirse.
             </p>
             <div className="users-modal-actions">
               <button
@@ -101,7 +101,7 @@ export default function UserTable() {
                   opacity: deletingId ? 0.7 : 1,
                 }}
               >
-                {deletingId ? "Eliminando..." : "Eliminar"}
+                {deletingId ? "Procesando..." : "Dar de baja"}
               </button>
             </div>
           </div>

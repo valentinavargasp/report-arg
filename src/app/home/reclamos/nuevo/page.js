@@ -44,6 +44,7 @@ export default function NuevoReclamoPage() {
   const [categorias,  setCategorias]  = useState([]);
   const [loadingCats, setLoadingCats] = useState(true);
   const [form, setForm] = useState({ titulo: "", descripcion: "", id_categoria: null, direccion: "" });
+  const [coords,      setCoords]      = useState({ latitud: null, longitud: null });
   const [fotos,       setFotos]       = useState([]);
   const [geoLoading,  setGeoLoading]  = useState(false);
   const [submitting,  setSubmitting]  = useState(false);
@@ -112,6 +113,7 @@ export default function NuevoReclamoPage() {
           const data = await res.json();
           const addr = data.display_name || `${latitude}, ${longitude}`;
           setForm(p => ({ ...p, direccion: addr }));
+          setCoords({ latitud: latitude, longitud: longitude });
         } catch {
           setForm(p => ({ ...p, direccion: "" }));
         } finally {
@@ -157,6 +159,8 @@ export default function NuevoReclamoPage() {
           id_categoria: form.id_categoria,
           id_usuario:   session.user.id,
           direccion:    form.direccion.trim(),
+          latitud:      coords.latitud,
+          longitud:     coords.longitud,
         }),
       });
       const data = await res.json();

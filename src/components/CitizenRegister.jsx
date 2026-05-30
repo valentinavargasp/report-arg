@@ -10,7 +10,42 @@ import {
   LockClosedIcon,
   MapPinIcon,
   UserIcon,
+  ChevronDownIcon,
 } from '@heroicons/react/20/solid';
+
+const PROVINCIAS_AR = [
+  'Buenos Aires','Catamarca','Chaco','Chubut','Ciudad Autónoma de Buenos Aires',
+  'Córdoba','Corrientes','Entre Ríos','Formosa','Jujuy','La Pampa','La Rioja',
+  'Mendoza','Misiones','Neuquén','Río Negro','Salta','San Juan','San Luis',
+  'Santa Cruz','Santa Fe','Santiago del Estero','Tierra del Fuego','Tucumán',
+];
+
+const CIUDADES_AR = {
+  'Buenos Aires': ['La Plata','Mar del Plata','Quilmes','Lanús','Lomas de Zamora','Morón','Tres de Febrero','San Martín','Tigre','Bahía Blanca','Tandil','Pergamino','Otra'],
+  'Catamarca': ['San Fernando del Valle de Catamarca','Santa Rosa','Tinogasta','Otra'],
+  'Chaco': ['Resistencia','Barranqueras','Presidencia Roque Sáenz Peña','Otra'],
+  'Chubut': ['Rawson','Comodoro Rivadavia','Puerto Madryn','Trelew','Otra'],
+  'Ciudad Autónoma de Buenos Aires': ['CABA'],
+  'Córdoba': ['Córdoba','Villa María','San Francisco','Río Cuarto','Alta Gracia','Villa Carlos Paz','Otra'],
+  'Corrientes': ['Corrientes','Goya','Curuzú Cuatiá','Otra'],
+  'Entre Ríos': ['Paraná','Concordia','Gualeguaychú','Otra'],
+  'Formosa': ['Formosa','Clorinda','Otra'],
+  'Jujuy': ['San Salvador de Jujuy','Palpalá','San Pedro','Otra'],
+  'La Pampa': ['Santa Rosa','General Pico','Otra'],
+  'La Rioja': ['La Rioja','Chilecito','Otra'],
+  'Mendoza': ['Mendoza','San Rafael','Godoy Cruz','Luján de Cuyo','Otra'],
+  'Misiones': ['Posadas','Oberá','Eldorado','Puerto Iguazú','Otra'],
+  'Neuquén': ['Neuquén','San Martín de los Andes','Zapala','Otra'],
+  'Río Negro': ['Viedma','Bariloche','Cipolletti','Otra'],
+  'Salta': ['Salta','San Ramón de la Nueva Orán','Tartagal','Otra'],
+  'San Juan': ['San Juan','Rawson','Rivadavia','Otra'],
+  'San Luis': ['San Luis','Villa Mercedes','Otra'],
+  'Santa Cruz': ['Río Gallegos','Caleta Olivia','Otra'],
+  'Santa Fe': ['Santa Fe','Rosario','Rafaela','Reconquista','Venado Tuerto','Otra'],
+  'Santiago del Estero': ['Santiago del Estero','La Banda','Otra'],
+  'Tierra del Fuego': ['Ushuaia','Río Grande','Otra'],
+  'Tucumán': ['San Miguel de Tucumán','Concepción','Banda del Río Salí','Otra'],
+};
 import { hasValidationErrors, validateCitizenRegister } from '@/utils/schemas';
 import { toast } from 'sonner';
 
@@ -122,7 +157,7 @@ export default function CitizenRegister() {
           <form onSubmit={handleSubmit} noValidate>
             <div className="register-grid">
               <div className="form-group">
-                <label className="form-label" htmlFor="nombre">NOMBRE</label>
+                <label className="form-label" htmlFor="nombre">NOMBRE <span className="form-required">*</span></label>
                 <div className="form-input-wrapper">
                   <input type="text" id="nombre" className="form-input" placeholder="Ej. Ana" value={formData.nombre} onChange={(e) => handleChange('nombre', e.target.value)} />
                   <div className="form-input-icon"><UserIcon aria-hidden /></div>
@@ -131,7 +166,7 @@ export default function CitizenRegister() {
               </div>
 
               <div className="form-group">
-                <label className="form-label" htmlFor="apellido">APELLIDO</label>
+                <label className="form-label" htmlFor="apellido">APELLIDO <span className="form-required">*</span></label>
                 <div className="form-input-wrapper">
                   <input type="text" id="apellido" className="form-input" placeholder="Ej. García" value={formData.apellido} onChange={(e) => handleChange('apellido', e.target.value)} />
                   <div className="form-input-icon"><UserIcon aria-hidden /></div>
@@ -141,7 +176,7 @@ export default function CitizenRegister() {
             </div>
 
             <div className="form-group">
-              <label className="form-label" htmlFor="email">CORREO ELECTRÓNICO</label>
+              <label className="form-label" htmlFor="email">CORREO ELECTRÓNICO <span className="form-required">*</span></label>
               <div className="form-input-wrapper">
                 <input type="email" id="email" className="form-input" placeholder="ejemplo@correo.com" value={formData.email} onChange={(e) => handleChange('email', e.target.value)} />
                 <div className="form-input-icon"><EnvelopeIcon aria-hidden /></div>
@@ -151,7 +186,7 @@ export default function CitizenRegister() {
 
             <div className="register-grid">
               <div className="form-group">
-                <label className="form-label" htmlFor="password">CONTRASEÑA</label>
+                <label className="form-label" htmlFor="password">CONTRASEÑA <span className="form-required">*</span></label>
                 <div className="form-input-wrapper">
                   <div className="form-input-icon form-input-icon-left"><LockClosedIcon aria-hidden /></div>
                   <input type={showPassword ? 'text' : 'password'} id="password" className="form-input has-left-icon" placeholder="••••••••" value={formData.password} onChange={(e) => handleChange('password', e.target.value)} />
@@ -163,7 +198,7 @@ export default function CitizenRegister() {
               </div>
 
               <div className="form-group">
-                <label className="form-label" htmlFor="confirmPassword">CONFIRMAR CONTRASEÑA</label>
+                <label className="form-label" htmlFor="confirmPassword">CONFIRMAR CONTRASEÑA <span className="form-required">*</span></label>
                 <div className="form-input-wrapper">
                   <div className="form-input-icon form-input-icon-left"><LockClosedIcon aria-hidden /></div>
                   <input type={showConfirmPassword ? 'text' : 'password'} id="confirmPassword" className="form-input has-left-icon" placeholder="••••••••" value={formData.confirmPassword} onChange={(e) => handleChange('confirmPassword', e.target.value)} />
@@ -177,26 +212,43 @@ export default function CitizenRegister() {
 
             <div className="register-grid">
               <div className="form-group">
-                <label className="form-label" htmlFor="provincia">PROVINCIA</label>
-                <div className="form-input-wrapper">
-                  <input type="text" id="provincia" className="form-input" placeholder="Buenos Aires" value={formData.provincia} onChange={(e) => handleChange('provincia', e.target.value)} />
-                  <div className="form-input-icon"><MapPinIcon aria-hidden /></div>
+                <label className="form-label" htmlFor="provincia">PROVINCIA <span className="form-required">*</span></label>
+                <div className="form-input-wrapper form-select-wrapper">
+                  <select
+                    id="provincia"
+                    className="form-input form-select"
+                    value={formData.provincia}
+                    onChange={(e) => handleChange('provincia', e.target.value)}
+                  >
+                    <option value="">Seleccioná una provincia</option>
+                    {PROVINCIAS_AR.map(p => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                  <div className="form-input-icon"><ChevronDownIcon aria-hidden /></div>
                 </div>
                 {errors.provincia && <p className="register-error">{errors.provincia}</p>}
               </div>
 
               <div className="form-group">
-                <label className="form-label" htmlFor="ciudad">CIUDAD</label>
-                <div className="form-input-wrapper">
-                  <input type="text" id="ciudad" className="form-input" placeholder="La Plata" value={formData.ciudad} onChange={(e) => handleChange('ciudad', e.target.value)} />
-                  <div className="form-input-icon"><MapPinIcon aria-hidden /></div>
+                <label className="form-label" htmlFor="ciudad">CIUDAD <span className="form-required">*</span></label>
+                <div className="form-input-wrapper form-select-wrapper">
+                  <select
+                    id="ciudad"
+                    className="form-input form-select"
+                    value={formData.ciudad}
+                    onChange={(e) => handleChange('ciudad', e.target.value)}
+                    disabled={!formData.provincia}
+                  >
+                    <option value="">{formData.provincia ? 'Seleccioná una ciudad' : 'Primero elegí provincia'}</option>
+                    {(CIUDADES_AR[formData.provincia] || []).map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                  <div className="form-input-icon"><ChevronDownIcon aria-hidden /></div>
                 </div>
                 {errors.ciudad && <p className="register-error">{errors.ciudad}</p>}
               </div>
             </div>
 
             <div className="form-group">
-              <label className="form-label" htmlFor="zona">ZONA</label>
+              <label className="form-label" htmlFor="zona">ZONA <span className="form-required">*</span></label>
               <div className="form-input-wrapper">
                 <input type="text" id="zona" className="form-input" placeholder="Centro" value={formData.zona} onChange={(e) => handleChange('zona', e.target.value)} />
                 <div className="form-input-icon"><MapPinIcon aria-hidden /></div>
@@ -206,7 +258,7 @@ export default function CitizenRegister() {
 
             <label className="register-checkbox">
               <input type="checkbox" checked={formData.acceptTerms} onChange={(e) => handleChange('acceptTerms', e.target.checked)} />
-              <span>Acepto los términos y condiciones</span>
+              <span>Acepto los términos y condiciones <span className="form-required">*</span></span>
             </label>
             {errors.acceptTerms && <p className="register-error">{errors.acceptTerms}</p>}
 

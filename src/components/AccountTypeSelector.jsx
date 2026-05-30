@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Card } from '@heroui/react';
 import { motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
+import { UserIcon, BuildingOffice2Icon } from '@heroicons/react/24/outline';
 
 const accountTypes = [
   {
@@ -11,18 +12,18 @@ const accountTypes = [
     label: 'Ciudadano',
     description:
       'Accede a servicios municipales, realiza reportes y mantenete informado sobre tu barrio.',
-    icon: '👤',
+    Icon: UserIcon,
   },
   {
     id: 'institution',
     label: 'Institución',
     description:
       'Gestiona trámites para tu empresa, ONG o entidad pública con herramientas avanzadas.',
-    icon: '🏢',
+    Icon: BuildingOffice2Icon,
   },
 ];
 
-function AccountTypeCard({ label, description, icon, isSelected, onSelect }) {
+function AccountTypeCard({ label, description, Icon, isSelected, onSelect }) {
   return (
     <motion.button
       type="button"
@@ -63,8 +64,8 @@ function AccountTypeCard({ label, description, icon, isSelected, onSelect }) {
           </div>
 
           {/* Ícono */}
-          <div className="w-11 h-11 rounded-full bg-[#c9d7ff] text-[rgb(var(--azul))] flex items-center justify-center text-lg mb-4">
-            {icon}
+          <div className="w-11 h-11 rounded-full bg-[#c9d7ff] text-[rgb(var(--azul))] flex items-center justify-center mb-4">
+            <Icon className="w-6 h-6" aria-hidden />
           </div>
 
           <h3 className="font-semibold text-[#1f232b] text-2xl mb-2 leading-tight">
