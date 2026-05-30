@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "../styles/landing.css";
 @import "../styles/login.css";
 @import "../styles/institution-register.css";
 @import "../styles/reset-password.css";
