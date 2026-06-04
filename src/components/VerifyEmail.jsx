@@ -138,6 +138,7 @@ export default function VerifyEmail() {
                     border: '2px solid #e5e7eb',
                     borderRadius: 12,
                     outline: 'none',
+                    color: 'rgb(var(--azul))',
                   }}
                 />
               ))}
