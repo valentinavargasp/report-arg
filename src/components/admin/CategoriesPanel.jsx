@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, MinusCircle } from "lucide-react";
+import { Pencil, MinusCircle, AlertTriangle } from "lucide-react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -98,7 +98,7 @@ export default function CategoriesPanel() {
             maxWidth: 400, width: "90%", border: "1px solid var(--color-border)",
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-              <span style={{ fontSize: 20 }}>⚠️</span>
+              <AlertTriangle size={20} color="#F5C842" />
               <h3 style={{ margin: 0, fontSize: 16, color: "#333" }}>Desactivar categoría</h3>
             </div>
             <p style={{ margin: "0 0 20px", fontSize: 13, color: "#666" }}>
@@ -107,8 +107,9 @@ export default function CategoriesPanel() {
             </p>
             <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
               <button onClick={() => setConfirmBaja(null)} style={{
-                padding: "9px 20px", border: "1px solid var(--color-border)",
+                padding: "9px 20px", border: "1px solid var(--color-primary)",
                 borderRadius: 8, background: "#fff", fontSize: 13, cursor: "pointer",
+                fontWeight: 600,
               }}>Cancelar</button>
               <button onClick={confirmarBaja} disabled={bajando} style={{
                 padding: "9px 20px", background: "var(--color-danger)",
