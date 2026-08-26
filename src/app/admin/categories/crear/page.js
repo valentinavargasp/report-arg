@@ -100,7 +100,7 @@ export default function CrearCategoriaPage() {
                 style={{ display: "block", width: "100%", marginTop: 6, resize: "none", boxSizing: "border-box" }} />
             </div>
 
-            {/* Tipo, Orden y Estado */}
+            {/* Tipo, Orden y Estado  */}
             <div style={{ display: "flex", gap: 16, alignItems: "flex-end", flexWrap: "wrap" }}>
               <div style={{ flex: 1, minWidth: 140 }}>
                 <label className="form-label">TIPO</label>
