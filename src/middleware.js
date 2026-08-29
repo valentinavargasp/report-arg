@@ -10,6 +10,11 @@ export async function middleware(request) {
     return NextResponse.redirect(loginUrl);
   }
 
+  // Verificación de rol para rutas de administración
+  if (request.nextUrl.pathname.startsWith("/admin") && token.role !== "admin") {
+    return NextResponse.redirect(new URL("/home", request.url));
+  }
+
   return NextResponse.next();
 }
 
