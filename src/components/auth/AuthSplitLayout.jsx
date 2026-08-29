@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 
 export default function AuthSplitLayout({
   title,
@@ -12,7 +13,7 @@ export default function AuthSplitLayout({
       
       {/* Panel izquierdo */}
       <div className="login-left" aria-hidden="true">
-        <img src="/logo.png" alt="" className="login-logo-img" />
+        <Image src="/logo.png" alt="" className="login-logo-img" width={250} height={60} unoptimized />
         <div className="login-left-content">
           <h1 className="login-title">{title}</h1>
           <p className="login-description">{description}</p>
@@ -23,7 +24,7 @@ export default function AuthSplitLayout({
       <div className="login-right">
         <div className={formClassName}>
           <div className="login-logo-mobile">
-            <img src="/logo.png" alt="ReportARG" className="login-logo-mobile-img" />
+            <Image src="/logo.png" alt="ReportARG" className="login-logo-mobile-img" width={180} height={40} unoptimized />
             {mobileSubtitle && (
               <p className="login-logo-mobile-subtitle">{mobileSubtitle}</p>
             )}
