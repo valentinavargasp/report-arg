@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { LockClosedIcon } from '@heroicons/react/20/solid';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import { authService } from '@/services/authService';
+import Image from 'next/image';
 
 export default function ResetPassword() {
   const [token, setToken] = useState('');
@@ -27,20 +27,10 @@ export default function ResetPassword() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Ocurrió un error');
-      }
-
+      await authService.requestPasswordReset(email);
       setSent(true);
     } catch (requestError) {
-      setError(requestError.message || 'Ocurrió un error');
+      setError(requestError.response?.data?.error || requestError.message || 'Ocurrió un error');
     } finally {
       setIsSubmitting(false);
     }
@@ -58,20 +48,10 @@ export default function ResetPassword() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/reset-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, newPassword: password }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'No se pudo restablecer la contraseña');
-      }
-
+      await authService.resetPassword(token, password);
       setChanged(true);
     } catch (resetError) {
-      setError(resetError.message || 'No se pudo restablecer la contraseña');
+      setError(resetError.response?.data?.error || resetError.message || 'No se pudo restablecer la contraseña');
     } finally {
       setIsSubmitting(false);
     }
@@ -102,7 +82,7 @@ export default function ResetPassword() {
     return (
       <div className="reset-container">
         <div className="reset-left">
-          <img src="/logo.png" alt="logo-reportarg" className="reset-logo-img" />
+          <Image src="/logo.png" alt="logo-reportarg" className="reset-logo-img" width={250} height={60} unoptimized />
           <div className="reset-left-content">
             <h1 className="reset-title">Construyendo una<br />comunidad más<br />segura.</h1>
             <p className="reset-description">Define el nivel institucional para la gestión y reporte inteligente de incidentes. Tecnología al servicio del ciudadano.</p>
@@ -112,7 +92,7 @@ export default function ResetPassword() {
         <div className="reset-right">
           <div className="reset-form">
             <div className="reset-logo-mobile">
-              <img src="/logo.png" alt="logo-reportarg" className="login-logo-mobile-img" />
+              <Image src="/logo.png" alt="logo-reportarg" className="login-logo-mobile-img" width={180} height={40} unoptimized />
             </div>
 
             <div className="reset-form-header">
@@ -153,7 +133,7 @@ export default function ResetPassword() {
     return (
       <div className="reset-container">
         <div className="reset-left">
-          <img src="/logo.png" alt="logo-reportarg" className="reset-logo-img" />
+          <Image src="/logo.png" alt="logo-reportarg" className="reset-logo-img" width={250} height={60} unoptimized />
           <div className="reset-left-content">
             <h1 className="reset-title">Construyendo una<br />comunidad más<br />segura.</h1>
             <p className="reset-description">Define el nivel institucional para la gestión y reporte inteligente de incidentes. Tecnología al servicio del ciudadano.</p>
@@ -163,7 +143,7 @@ export default function ResetPassword() {
         <div className="reset-right">
           <div className="reset-form">
             <div className="reset-logo-mobile">
-              <img src="/logo.png" alt="logo-reportarg" className="login-logo-mobile-img" />
+              <Image src="/logo.png" alt="logo-reportarg" className="login-logo-mobile-img" width={180} height={40} unoptimized />
             </div>
 
             <div className="reset-success">
@@ -188,7 +168,7 @@ export default function ResetPassword() {
   return (
     <div className="reset-container">
       <div className="reset-left">
-        <img src="/logo.png" alt="logo-reportarg" className="reset-logo-img" />
+        <Image src="/logo.png" alt="logo-reportarg" className="reset-logo-img" width={250} height={60} unoptimized />
         <div className="reset-left-content">
           <h1 className="reset-title">Construyendo una<br />comunidad más<br />segura.</h1>
           <p className="reset-description">Define el nivel institucional para la gestión y reporte inteligente de incidentes. Tecnología al servicio del ciudadano.</p>
@@ -198,7 +178,7 @@ export default function ResetPassword() {
       <div className="reset-right">
         <div className="reset-form">
           <div className="reset-logo-mobile">
-            <img src="/logo.png" alt="logo-reportarg" className="login-logo-mobile-img" />
+            <Image src="/logo.png" alt="logo-reportarg" className="login-logo-mobile-img" width={180} height={40} unoptimized />
           </div>
 
           <div className="reset-form-header">

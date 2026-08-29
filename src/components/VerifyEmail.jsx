@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import { authService } from '@/services/authService';
+import Image from 'next/image';
 
 export default function VerifyEmail() {
   const [code, setCode] = useState(['', '', '', '', '', '']);
@@ -53,23 +53,14 @@ export default function VerifyEmail() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/verify-email`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, code: finalCode }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'El código ingresado no es válido.');
-      }
+      await authService.verifyEmail(email, finalCode);
 
       toast.success('¡Cuenta verificada! Ya podés iniciar sesión.');
       setTimeout(() => {
         router.push('/login');
       }, 1500);
     } catch (submitError) {
-      setError(submitError.message || 'El código ingresado no es válido.');
+      setError(submitError.response?.data?.error || submitError.message || 'El código ingresado no es válido.');
     } finally {
       setIsSubmitting(false);
     }
@@ -79,25 +70,16 @@ export default function VerifyEmail() {
     setError('');
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/resend-code`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'No se pudo reenviar el código');
-      }
+      await authService.resendVerificationCode(email);
     } catch (resendError) {
-      setError(resendError.message || 'No se pudo reenviar el código');
+      setError(resendError.response?.data?.error || resendError.message || 'No se pudo reenviar el código');
     }
   };
 
   return (
     <div className="login-container">
       <div className="login-left">
-        <img src="/logo.png" alt="logo-reportarg" className="login-logo-img" />
+        <Image src="/logo.png" alt="logo-reportarg" className="login-logo-img" width={250} height={60} unoptimized />
         <div className="login-left-content">
           <h1 className="login-title">Construyendo una<br />comunidad más<br />segura.</h1>
           <p className="login-description">Únete al portal institucional para la gestión y reporte inteligente de incidentes. Tecnología al servicio del ciudadano.</p>
@@ -107,7 +89,7 @@ export default function VerifyEmail() {
       <div className="login-right">
         <div className="login-form login-form-register">
           <div className="login-logo-mobile">
-            <img src="/logo.png" alt="ReportARG" className="login-logo-mobile-img" />
+            <Image src="/logo.png" alt="ReportARG" className="login-logo-mobile-img" width={180} height={40} unoptimized />
             <p className="login-logo-mobile-subtitle">Verificación de cuenta</p>
           </div>
 
