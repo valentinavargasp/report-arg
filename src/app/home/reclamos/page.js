@@ -4,26 +4,25 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { FilePlus2, MapPin, Clock, Tag, ChevronRight } from "lucide-react";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+import apiClient from "@/services/apiClient";
 
 const ESTADO_LABELS = {
-  recibido:   "Recibido",
+  recibido: "Recibido",
   en_proceso: "En proceso",
-  resuelto:   "Resuelto",
-  rechazado:  "Rechazado",
+  resuelto: "Resuelto",
+  rechazado: "Rechazado",
 };
 
 const PASOS = ["recibido", "en_proceso", "resuelto"];
 
 function tiempoRelativo(fecha) {
   const diff = Date.now() - new Date(fecha).getTime();
-  const min  = Math.floor(diff / 60000);
-  const hs   = Math.floor(diff / 3600000);
+  const min = Math.floor(diff / 60000);
+  const hs = Math.floor(diff / 3600000);
   const dias = Math.floor(diff / 86400000);
-  if (min < 1)  return "Ahora";
+  if (min < 1) return "Ahora";
   if (min < 60) return `Hace ${min} min`;
-  if (hs  < 24) return `Hace ${hs}h`;
+  if (hs < 24) return `Hace ${hs}h`;
   return `Hace ${dias} día${dias > 1 ? "s" : ""}`;
 }
 
@@ -33,7 +32,7 @@ function ProgressBar({ estado }) {
       <span className="reclamo-rechazado-badge">Reclamo rechazado</span>
     </div>
   );
-  const idx    = PASOS.indexOf(estado);
+  const idx = PASOS.indexOf(estado);
   const labels = ["Recibido", "En proceso", "Resuelto"];
   return (
     <div className="reclamo-progress-track">
@@ -59,14 +58,14 @@ export default function MisReclamosPage() {
   const router = useRouter();
 
   const [reclamos, setReclamos] = useState([]);
-  const [loading,  setLoading]  = useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (status === "loading" || !session?.user?.id) return;
-    fetch(`${API_URL}/api/reclamos/mis-reclamos?usuario=${session.user.id}`)
-      .then(r => r.json())
+    apiClient.get(`/reclamos/mis-reclamos?usuario=${session.user.id}`)
+      .then(r => r.data)
       .then(d => { if (d.ok) setReclamos(d.data); })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false));
   }, [session, status]);
 

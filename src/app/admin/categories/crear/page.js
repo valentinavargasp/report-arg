@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation";
 import Sidebar from "@/components/admin/Sidebar";
 import Navbar from "@/components/admin/Navbar";
 import Breadcrumb from "@/components/admin/Breadcrumb";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import apiClient from "@/services/apiClient";
 
 export default function CrearCategoriaPage() {
   const router = useRouter();
@@ -42,17 +41,13 @@ export default function CrearCategoriaPage() {
 
     setSaving(true);
     try {
-      const res = await fetch(`${API_URL}/api/admin/categorias`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...form,
-          codigo: form.codigo.trim().toUpperCase(),
-          nombre: form.nombre.trim(),
-          orden: Number(form.orden),
-        }),
+      const res = await apiClient.post(`/admin/categorias`, {
+        ...form,
+        codigo: form.codigo.trim().toUpperCase(),
+        nombre: form.nombre.trim(),
+        orden: Number(form.orden),
       });
-      const data = await res.json();
+      const data = res.data;
       if (!data.ok) return setError(data.mensaje);
       setSuccess("Categoría creada correctamente.");
       setTimeout(() => router.push("/admin/categories"), 1500);

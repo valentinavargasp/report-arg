@@ -4,51 +4,50 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { PlusCircle, CheckCircle, Clock, Eye, EyeOff } from "lucide-react";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+import apiClient from "@/services/apiClient";
 
 const ESTADO_CONFIG = {
   // 'recibido' = comunicado publicado
-  recibido:   { label: "Publicado",  cls: "inst-com-badge-publicado",  icon: Eye     },
-  en_proceso: { label: "Publicado",  cls: "inst-com-badge-publicado",  icon: Eye     },
-  resuelto:   { label: "Publicado",  cls: "inst-com-badge-publicado",  icon: Eye     },
+  recibido: { label: "Publicado", cls: "inst-com-badge-publicado", icon: Eye },
+  en_proceso: { label: "Publicado", cls: "inst-com-badge-publicado", icon: Eye },
+  resuelto: { label: "Publicado", cls: "inst-com-badge-publicado", icon: Eye },
   // 'rechazado' = borrador (mapeado desde el frontend)
-  rechazado:  { label: "Borrador",   cls: "inst-com-badge-borrador",   icon: EyeOff  },
+  rechazado: { label: "Borrador", cls: "inst-com-badge-borrador", icon: EyeOff },
 };
 
 function tiempoRelativo(fechaStr) {
   const diff = Date.now() - new Date(fechaStr).getTime();
-  const min  = Math.floor(diff / 60000);
-  if (min < 1)   return "Ahora";
-  if (min < 60)  return `Hace ${min} min`;
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return "Ahora";
+  if (min < 60) return `Hace ${min} min`;
   const hs = Math.floor(min / 60);
-  if (hs  < 24)  return `Hace ${hs}h`;
+  if (hs < 24) return `Hace ${hs}h`;
   const dias = Math.floor(hs / 24);
   return `Hace ${dias} día${dias > 1 ? "s" : ""}`;
 }
 
 export default function ComunicadosInstitucionPage() {
   const { data: session, status } = useSession();
-  const router                    = useRouter();
+  const router = useRouter();
 
   const [comunicados, setComunicados] = useState([]);
-  const [categorias,  setCategorias]  = useState([]);
-  const [loading,     setLoading]     = useState(true);
-  const [filtroTab,   setFiltroTab]   = useState("todos");
+  const [categorias, setCategorias] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filtroTab, setFiltroTab] = useState("todos");
 
   useEffect(() => {
     if (status === "loading") return;
     if (!session?.user?.id) return;
 
     Promise.all([
-      fetch(`${API_URL}/api/comunicados/mis-comunicados?usuario=${session.user.id}`)
-        .then(r => r.json()),
-      fetch(`${API_URL}/api/comunicados/categorias`)
-        .then(r => r.json()),
+      apiClient.get(`/comunicados/mis-comunicados?usuario=${session.user.id}`)
+        .then(r => r.data),
+      apiClient.get(`/comunicados/categorias`)
+        .then(r => r.data),
     ]).then(([comData, catData]) => {
       if (comData.ok) setComunicados(comData.data);
       if (catData.ok) setCategorias(catData.data);
-    }).catch(() => {})
+    }).catch(() => { })
       .finally(() => setLoading(false));
   }, [session?.user?.id, status]);
 
@@ -106,7 +105,7 @@ export default function ComunicadosInstitucionPage() {
         <div className="inst-comunicados-list">
           {filtrados.map(com => {
             const estadoConf = ESTADO_CONFIG[com.estado] ?? ESTADO_CONFIG.publicado;
-            const Icon       = estadoConf.icon;
+            const Icon = estadoConf.icon;
             return (
               <article key={com.id} className="inst-com-card">
                 <div className="inst-com-card-top">

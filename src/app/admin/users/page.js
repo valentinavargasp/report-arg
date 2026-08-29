@@ -6,8 +6,7 @@ import Navbar from "@/components/admin/Navbar";
 import UserTable from "@/components/admin/UserTable";
 import Breadcrumb from "@/components/admin/Breadcrumb";
 import { useRouter } from "next/navigation";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+import apiClient from "@/services/apiClient";
 
 export default function UsersPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -17,9 +16,9 @@ export default function UsersPage() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/admin/usuarios/stats`);
-        const data = await response.json();
-        if (response.ok && data?.ok && data?.data) {
+        const response = await apiClient.get('/admin/usuarios/stats');
+        const data = response.data;
+        if (data?.ok && data?.data) {
           setStats(data.data);
         }
       } catch (error) {

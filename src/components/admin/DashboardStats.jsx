@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import apiClient from "@/services/apiClient";
 
 const estadoConfig = {
   recibido:   { label: "Abierto",    color: "#E6F1FB", textColor: "#0C447C" },
@@ -33,11 +32,11 @@ export default function DashboardStats() {
 
   useEffect(() => {
     Promise.all([
-      fetch(`${API_URL}/api/admin/usuarios/stats`).then(r => r.json()),
-      fetch(`${API_URL}/api/admin/reclamos/stats`).then(r => r.json()),
-      fetch(`${API_URL}/api/admin/reclamos/ultimos`).then(r => r.json()),
-      fetch(`${API_URL}/api/admin/reclamos/por-categoria`).then(r => r.json()),
-      fetch(`${API_URL}/api/admin/reclamos/actividad-mensual`).then(r => r.json()),
+      apiClient.get(`/admin/usuarios/stats`).then(r => r.data),
+      apiClient.get(`/admin/reclamos/stats`).then(r => r.data),
+      apiClient.get(`/admin/reclamos/ultimos`).then(r => r.data),
+      apiClient.get(`/admin/reclamos/por-categoria`).then(r => r.data),
+      apiClient.get(`/admin/reclamos/actividad-mensual`).then(r => r.data),
     ]).then(([uStats, rStats, ult, porCat, act]) => {
       if (uStats.ok) setStatsUsuarios(uStats.data);
       if (rStats.ok) setStatsReclamos(rStats.data);

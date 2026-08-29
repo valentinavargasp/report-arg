@@ -1,24 +1,23 @@
 "use client";
 
 import { useState, useEffect } from "react";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import apiClient from "@/services/apiClient";
 
 const estadoConfig = {
   verificada: { label: "Verificada", bg: "#EAF3DE", color: "#27500A" },
-  pendiente:  { label: "Pendiente",  bg: "#FFF8E1", color: "#7a6000" },
+  pendiente: { label: "Pendiente", bg: "#FFF8E1", color: "#7a6000" },
 };
 
 export default function InstitutionTable() {
   const [instituciones, setInstituciones] = useState([]);
-  const [loading,       setLoading]       = useState(true);
-  const [error,         setError]         = useState("");
-  const [filtro,        setFiltro]        = useState("todos");
-  const [modalAprobar,  setModalAprobar]  = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [filtro, setFiltro] = useState("todos");
+  const [modalAprobar, setModalAprobar] = useState(null);
   const [modalRechazar, setModalRechazar] = useState(null);
-  const [motivo,        setMotivo]        = useState("");
-  const [motivoError,   setMotivoError]   = useState("");
-  const [procesando,    setProcesando]    = useState(false);
+  const [motivo, setMotivo] = useState("");
+  const [motivoError, setMotivoError] = useState("");
+  const [procesando, setProcesando] = useState(false);
 
   useEffect(() => {
     fetchInstituciones();
@@ -29,8 +28,8 @@ export default function InstitutionTable() {
     setError("");
     try {
       const params = filtro !== "todos" ? `?estado=${filtro}` : "";
-      const res    = await fetch(`${API_URL}/api/admin/instituciones${params}`);
-      const data   = await res.json();
+      const res = await apiClient.get(`/admin/instituciones${params}`);
+      const data = res.data;
       if (data.ok) setInstituciones(data.data);
       else setError("Error al cargar instituciones");
     } catch (err) {
@@ -43,8 +42,8 @@ export default function InstitutionTable() {
   async function aprobar(id) {
     setProcesando(true);
     try {
-      const res  = await fetch(`${API_URL}/api/admin/instituciones/${id}/verificar`, { method: 'PUT' });
-      const data = await res.json();
+      const res = await apiClient.put(`/admin/instituciones/${id}/verificar`);
+      const data = res.data;
       if (data.ok) {
         await fetchInstituciones();
         setModalAprobar(null);
@@ -62,12 +61,8 @@ export default function InstitutionTable() {
     if (!motivo.trim()) { setMotivoError("El motivo es obligatorio"); return; }
     setProcesando(true);
     try {
-      const res  = await fetch(`${API_URL}/api/admin/instituciones/${id}/rechazar`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ motivo }),
-      });
-      const data = await res.json();
+      const res = await apiClient.put(`/admin/instituciones/${id}/rechazar`, { motivo });
+      const data = res.data;
       if (data.ok) {
         await fetchInstituciones();
         setModalRechazar(null);
@@ -84,8 +79,8 @@ export default function InstitutionTable() {
   }
 
   const filtradas = instituciones.filter(i => {
-    if (filtro === "todos")      return true;
-    if (filtro === "pendiente")  return !i.verificada;
+    if (filtro === "todos") return true;
+    if (filtro === "pendiente") return !i.verificada;
     if (filtro === "verificada") return i.verificada;
     return true;
   });
@@ -246,7 +241,7 @@ export default function InstitutionTable() {
                     <span style={{
                       fontSize: 11, padding: "3px 10px", borderRadius: 20, fontWeight: 600,
                       background: inst.verificada ? "#EAF3DE" : "#FFF8E1",
-                      color:      inst.verificada ? "#27500A" : "#7a6000",
+                      color: inst.verificada ? "#27500A" : "#7a6000",
                     }}>
                       {inst.verificada ? "Verificada" : "Pendiente"}
                     </span>
@@ -286,7 +281,7 @@ export default function InstitutionTable() {
                 <span style={{
                   fontSize: 11, padding: "3px 10px", borderRadius: 20, fontWeight: 600,
                   background: inst.verificada ? "#EAF3DE" : "#FFF8E1",
-                  color:      inst.verificada ? "#27500A" : "#7a6000",
+                  color: inst.verificada ? "#27500A" : "#7a6000",
                 }}>
                   {inst.verificada ? "Verificada" : "Pendiente"}
                 </span>

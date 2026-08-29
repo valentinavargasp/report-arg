@@ -3,56 +3,54 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   ArrowLeft, Bold, Italic, Underline, Link2,
   ImageIcon, X, CheckCircle,
   Zap, Droplets, ShieldAlert, HeartPulse, HardHat,
   Megaphone, Trash2, AlertTriangle, Bus, Info, Volume2,
 } from "lucide-react";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+import apiClient from "@/services/apiClient";
+import { uploadImage } from "@/services/uploadService";
 
 const CATEGORIA_ICON_MAP = [
-  { keys: ["luz", "electric", "corte"],       Icon: Zap          },
-  { keys: ["agua", "water", "cañería"],        Icon: Droplets     },
-  { keys: ["seguridad", "robo", "crimen"],     Icon: ShieldAlert  },
-  { keys: ["salud", "médico", "hospital"],     Icon: HeartPulse   },
-  { keys: ["obra", "construcción", "vial"],    Icon: HardHat      },
-  { keys: ["residuo", "basura", "limpieza"],   Icon: Trash2       },
-  { keys: ["alerta", "peligro", "urgente"],    Icon: AlertTriangle },
-  { keys: ["transporte", "colectivo", "bus"],  Icon: Bus          },
-  { keys: ["ruido", "sonido"],                 Icon: Volume2      },
-  { keys: ["info", "aviso", "general"],        Icon: Info         },
+  { keys: ["luz", "electric", "corte"], Icon: Zap },
+  { keys: ["agua", "water", "cañería"], Icon: Droplets },
+  { keys: ["seguridad", "robo", "crimen"], Icon: ShieldAlert },
+  { keys: ["salud", "médico", "hospital"], Icon: HeartPulse },
+  { keys: ["obra", "construcción", "vial"], Icon: HardHat },
+  { keys: ["residuo", "basura", "limpieza"], Icon: Trash2 },
+  { keys: ["alerta", "peligro", "urgente"], Icon: AlertTriangle },
+  { keys: ["transporte", "colectivo", "bus"], Icon: Bus },
+  { keys: ["ruido", "sonido"], Icon: Volume2 },
+  { keys: ["info", "aviso", "general"], Icon: Info },
 ];
 
 function CatIcon({ nombre }) {
   const lower = nombre?.toLowerCase() ?? "";
   const match = CATEGORIA_ICON_MAP.find(({ keys }) => keys.some(k => lower.includes(k)));
-  const Icon  = match?.Icon ?? Megaphone;
+  const Icon = match?.Icon ?? Megaphone;
   return <Icon size={20} />;
 }
 
 export default function NuevoComunicadoPage() {
   const { data: session, status } = useSession();
-  const router                    = useRouter();
+  const router = useRouter();
 
-  const [categorias,    setCategorias]    = useState([]);
-  const [titulo,        setTitulo]        = useState("");
-  const [descripcion,   setDescripcion]   = useState("");
-  const [categoriaId,   setCategoriaId]   = useState(null);
+  const [categorias, setCategorias] = useState([]);
+  const [titulo, setTitulo] = useState("");
+  const [descripcion, setDescripcion] = useState("");
+  const [categoriaId, setCategoriaId] = useState(null);
   const [imagenPreview, setImagenPreview] = useState(null);
-  const [imagenFile,    setImagenFile]    = useState(null);
-  const [enviando,      setEnviando]      = useState(false);
-  const [error,         setError]         = useState("");
-  const [exito,         setExito]         = useState(false);
-  const [errorCats,     setErrorCats]     = useState(false);
+  const [imagenFile, setImagenFile] = useState(null);
+  const [enviando, setEnviando] = useState(false);
+  const [error, setError] = useState("");
+  const [exito, setExito] = useState(false);
+  const [errorCats, setErrorCats] = useState(false);
 
   useEffect(() => {
-    fetch(`${API_URL}/api/comunicados/categorias`)
-      .then(r => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
+    apiClient.get(`/comunicados/categorias`)
+      .then(r => r.data)
       .then(d => {
         if (d.ok && d.data.length > 0) {
           setCategorias(d.data);
@@ -95,28 +93,21 @@ export default function NuevoComunicadoPage() {
       // Subir imagen si existe
       let imagenUrl = null;
       if (imagenFile) {
-        const fd = new FormData();
-        fd.append("foto", imagenFile);
-        const upRes  = await fetch(`${API_URL}/api/admin/upload/foto`, { method: "POST", body: fd });
-        const upData = await upRes.json();
+        const upData = await uploadImage(imagenFile);
         if (upData.ok) imagenUrl = upData.url;
       }
 
       const payload = {
-        titulo:       titulo.trim(),
-        descripcion:  descripcion.trim() || null,
+        titulo: titulo.trim(),
+        descripcion: descripcion.trim() || null,
         id_categoria: categoriaId,
-        id_usuario:   session.user.id,
-        imagen:       imagenUrl,
-        estado:       estadoFinal,
+        id_usuario: session.user.id,
+        imagen: imagenUrl,
+        estado: estadoFinal,
       };
 
-      const res  = await fetch(`${API_URL}/api/comunicados`, {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify(payload),
-      });
-      const data = await res.json();
+      const res = await apiClient.post(`/comunicados`, payload);
+      const data = res.data;
 
       if (!data.ok) {
         setError(data.mensaje || "No se pudo guardar el comunicado.");
@@ -228,9 +219,9 @@ export default function NuevoComunicadoPage() {
             Imagen o Banner <span className="inst-form-hint-inline">(Opcional)</span>
           </label>
           {imagenPreview ? (
-            <div className="inst-img-preview-wrap">
-              <img src={imagenPreview} alt="Preview" className="inst-img-preview" />
-              <button className="inst-img-remove-btn" onClick={quitarImagen} type="button">
+            <div className="inst-img-preview-wrap" style={{ position: "relative", width: "100%", height: "200px" }}>
+              <Image src={imagenPreview} alt="Preview" fill unoptimized style={{ objectFit: "cover", borderRadius: "8px" }} />
+              <button className="inst-img-remove-btn" onClick={quitarImagen} type="button" style={{ position: "absolute", top: 8, right: 8, zIndex: 10 }}>
                 <X size={16} />
               </button>
             </div>

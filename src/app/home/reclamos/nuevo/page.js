@@ -3,28 +3,29 @@
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   ArrowLeft, MapPin, Camera, X, Check,
   Loader2, Send, Lightbulb, ShieldCheck, Droplets,
   Bus, Trash2, Trees, Building2, Wifi, Wrench,
   Heart, AlertCircle, Sparkles, Waves,
 } from "lucide-react";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+import apiClient from "@/services/apiClient";
+import { uploadImage } from "@/services/uploadService";
 
 const ICON_RULES = [
-  { keys: ["luz", "alumbrado", "iluminac", "luminaria"],     Icon: Lightbulb   },
-  { keys: ["seguridad", "prevenci", "delito", "violencia"],  Icon: ShieldCheck },
+  { keys: ["luz", "alumbrado", "iluminac", "luminaria"], Icon: Lightbulb },
+  { keys: ["seguridad", "prevenci", "delito", "violencia"], Icon: ShieldCheck },
   { keys: ["agua", "cloaca", "cloacal", "hidráulic", "inundac"], Icon: Droplets },
   { keys: ["transporte", "tránsito", "colectivo", "parada", "vial"], Icon: Bus },
-  { keys: ["residuo", "basura", "higiene", "limpieza"],      Icon: Trash2      },
-  { keys: ["verde", "espacio", "jardín", "parque", "arbol"], Icon: Trees       },
+  { keys: ["residuo", "basura", "higiene", "limpieza"], Icon: Trash2 },
+  { keys: ["verde", "espacio", "jardín", "parque", "arbol"], Icon: Trees },
   { keys: ["infraestructura", "obra", "pavimento", "veredas"], Icon: Building2 },
-  { keys: ["conectiv", "wifi", "internet"],                  Icon: Wifi        },
-  { keys: ["mantenim", "reparaci"],                          Icon: Wrench      },
-  { keys: ["salud", "hospital", "sanitario"],                Icon: Heart       },
-  { keys: ["contaminac", "ambiental"],                       Icon: Waves       },
-  { keys: ["social", "comunitario", "barrio"],               Icon: Sparkles    },
+  { keys: ["conectiv", "wifi", "internet"], Icon: Wifi },
+  { keys: ["mantenim", "reparaci"], Icon: Wrench },
+  { keys: ["salud", "hospital", "sanitario"], Icon: Heart },
+  { keys: ["contaminac", "ambiental"], Icon: Waves },
+  { keys: ["social", "comunitario", "barrio"], Icon: Sparkles },
 ];
 
 function getIcono(nombre = "", desc = "") {
@@ -37,25 +38,25 @@ function getIcono(nombre = "", desc = "") {
 
 export default function NuevoReclamoPage() {
   const { data: session, status } = useSession();
-  const router      = useRouter();
-  const inputRef    = useRef(null);
-  const dropRef     = useRef(null);
+  const router = useRouter();
+  const inputRef = useRef(null);
+  const dropRef = useRef(null);
 
-  const [categorias,  setCategorias]  = useState([]);
+  const [categorias, setCategorias] = useState([]);
   const [loadingCats, setLoadingCats] = useState(true);
   const [form, setForm] = useState({ titulo: "", descripcion: "", id_categoria: null, direccion: "" });
-  const [coords,      setCoords]      = useState({ latitud: null, longitud: null });
-  const [fotos,       setFotos]       = useState([]);
-  const [geoLoading,  setGeoLoading]  = useState(false);
-  const [submitting,  setSubmitting]  = useState(false);
-  const [error,       setError]       = useState("");
+  const [coords, setCoords] = useState({ latitud: null, longitud: null });
+  const [fotos, setFotos] = useState([]);
+  const [geoLoading, setGeoLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
 
   useEffect(() => {
-    fetch(`${API_URL}/api/reclamos/categorias`)
-      .then(r => r.json())
+    apiClient.get(`/reclamos/categorias`)
+      .then(r => r.data)
       .then(d => { if (d.ok) setCategorias(d.data); })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoadingCats(false));
   }, []);
 
@@ -74,10 +75,7 @@ export default function NuevoReclamoPage() {
 
     for (const entrada of entradas) {
       try {
-        const fd = new FormData();
-        fd.append("foto", entrada.file);
-        const res  = await fetch(`${API_URL}/api/admin/upload/foto`, { method: "POST", body: fd });
-        const data = await res.json();
+        const data = await uploadImage(entrada.file);
         setFotos(prev => prev.map(f =>
           f.preview === entrada.preview
             ? { ...f, url: data.ok ? data.url : null, uploading: false }
@@ -106,7 +104,7 @@ export default function NuevoReclamoPage() {
     navigator.geolocation.getCurrentPosition(
       async ({ coords: { latitude, longitude } }) => {
         try {
-          const res  = await fetch(
+          const res = await fetch(
             `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
             { headers: { "Accept-Language": "es" } }
           );
@@ -126,12 +124,12 @@ export default function NuevoReclamoPage() {
 
   function validar() {
     const errs = {};
-    if (!form.titulo.trim())               errs.titulo      = "El título es obligatorio.";
-    else if (form.titulo.trim().length < 5) errs.titulo      = "El título debe tener al menos 5 caracteres.";
-    if (!form.descripcion.trim())          errs.descripcion = "La descripción es obligatoria.";
+    if (!form.titulo.trim()) errs.titulo = "El título es obligatorio.";
+    else if (form.titulo.trim().length < 5) errs.titulo = "El título debe tener al menos 5 caracteres.";
+    if (!form.descripcion.trim()) errs.descripcion = "La descripción es obligatoria.";
     else if (form.descripcion.trim().length < 10) errs.descripcion = "Describí el problema con más detalle (mínimo 10 caracteres).";
-    if (!form.id_categoria)               errs.categoria   = "Seleccioná una categoría.";
-    if (!form.direccion.trim())            errs.direccion   = "Ingresá la ubicación del problema.";
+    if (!form.id_categoria) errs.categoria = "Seleccioná una categoría.";
+    if (!form.direccion.trim()) errs.direccion = "Ingresá la ubicación del problema.";
     return errs;
   }
 
@@ -150,20 +148,16 @@ export default function NuevoReclamoPage() {
 
     setSubmitting(true);
     try {
-      const res  = await fetch(`${API_URL}/api/reclamos`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          titulo:       form.titulo.trim(),
-          descripcion:  form.descripcion.trim(),
-          id_categoria: form.id_categoria,
-          id_usuario:   session.user.id,
-          direccion:    form.direccion.trim(),
-          latitud:      coords.latitud,
-          longitud:     coords.longitud,
-        }),
+      const res = await apiClient.post(`/reclamos`, {
+        titulo: form.titulo.trim(),
+        descripcion: form.descripcion.trim(),
+        id_categoria: form.id_categoria,
+        id_usuario: session.user.id,
+        direccion: form.direccion.trim(),
+        latitud: coords.latitud,
+        longitud: coords.longitud,
       });
-      const data = await res.json();
+      const data = res.data;
       if (data.ok) {
         router.push("/home");
       } else {
@@ -223,7 +217,7 @@ export default function NuevoReclamoPage() {
               <div className={`nr-cat-grid${fieldErrors.categoria ? " nr-cat-grid-error" : ""}`}>
                 {categorias.map(cat => {
                   const Icon = getIcono(cat.nombre, cat.descripcion);
-                  const sel  = form.id_categoria === cat.id;
+                  const sel = form.id_categoria === cat.id;
                   return (
                     <button
                       key={cat.id}
@@ -291,8 +285,8 @@ export default function NuevoReclamoPage() {
               ) : (
                 <div className="nr-fotos-grid" onClick={e => e.stopPropagation()}>
                   {fotos.map(f => (
-                    <div key={f.preview} className="nr-foto-thumb">
-                      <img src={f.preview} alt="evidencia" />
+                    <div key={f.preview} className="nr-foto-thumb" style={{ position: "relative", width: "100%", paddingTop: "100%" }}>
+                      <Image src={f.preview} alt="evidencia" fill unoptimized style={{ objectFit: "cover" }} />
                       {f.uploading && (
                         <div className="nr-foto-overlay">
                           <Loader2 size={16} className="nr-spin" />

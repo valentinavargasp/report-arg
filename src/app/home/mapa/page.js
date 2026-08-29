@@ -4,41 +4,40 @@ import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, MapPin, Loader2 } from "lucide-react";
+import apiClient from "@/services/apiClient";
 
 const MapaReclamos = dynamic(
   () => import("@/components/home/MapaReclamos"),
   { ssr: false, loading: () => <div className="mapa-loading"><Loader2 size={24} className="spin" /> Cargando mapa…</div> }
 );
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-
 const ESTADO_LABEL = {
-  recibido:   "Recibido",
+  recibido: "Recibido",
   en_proceso: "En proceso",
-  resuelto:   "Resuelto",
-  rechazado:  "Rechazado",
+  resuelto: "Resuelto",
+  rechazado: "Rechazado",
 };
 
 const FILTROS = [
-  { key: "",           label: "Todos"       },
-  { key: "recibido",   label: "Recibido"    },
-  { key: "en_proceso", label: "En proceso"  },
-  { key: "resuelto",   label: "Resuelto"    },
-  { key: "rechazado",  label: "Rechazado"   },
+  { key: "", label: "Todos" },
+  { key: "recibido", label: "Recibido" },
+  { key: "en_proceso", label: "En proceso" },
+  { key: "resuelto", label: "Resuelto" },
+  { key: "rechazado", label: "Rechazado" },
 ];
 
 export default function MapaPage() {
   const router = useRouter();
-  const [reclamos,     setReclamos]     = useState([]);
-  const [loading,      setLoading]      = useState(true);
-  const [filtro,       setFiltro]       = useState("");
+  const [reclamos, setReclamos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filtro, setFiltro] = useState("");
   const [seleccionado, setSeleccionado] = useState(null);
 
   useEffect(() => {
-    fetch(`${API_URL}/api/reclamos/mapa`)
-      .then(r => r.json())
+    apiClient.get(`/reclamos/mapa`)
+      .then(r => r.data)
       .then(d => { if (d.ok) setReclamos(d.data); })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false));
   }, []);
 
