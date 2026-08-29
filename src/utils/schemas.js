@@ -100,113 +100,53 @@ export const validateNewPassword = (data) => {
   return errors;
 };
 
-export const validateCitizenRegister = (data) => {
-  const errors = {};
+export const citizenRegisterSchema = z.object({
+  nombre: z.string().trim().min(1, 'El nombre es requerido.').min(2, 'El nombre debe tener al menos 2 caracteres.'),
+  apellido: z.string().trim().min(1, 'El apellido es requerido.').min(2, 'El apellido debe tener al menos 2 caracteres.'),
+  email: z.string().trim().min(1, 'El correo electrónico es requerido.').regex(emailRegex, 'Ingresá un correo válido.'),
+  password: z
+    .string()
+    .min(1, 'La contraseña es requerida.')
+    .min(8, 'La contraseña debe tener al menos 8 caracteres.')
+    .regex(/[A-Z]/, 'La contraseña debe contener al menos una mayúscula.')
+    .regex(/[0-9]/, 'La contraseña debe contener al menos un número.'),
+  confirmPassword: z.string().min(1, 'Confirmá tu contraseña.'),
+  provincia: z.string().trim().min(1, 'La provincia es requerida.'),
+  ciudad: z.string().trim().min(1, 'La ciudad es requerida.'),
+  zona: z.string().trim().min(1, 'La zona es requerida.'),
+  acceptTerms: z.any().refine((val) => val === true, {
+    message: 'Debés aceptar los términos para continuar.'
+  })
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Las contraseñas no coinciden.",
+  path: ["confirmPassword"],
+});
 
-  if (!data.nombre?.trim()) {
-    addError(errors, 'nombre', 'El nombre es requerido.');
-  } else if (data.nombre.trim().length < 2) {
-    addError(errors, 'nombre', 'El nombre debe tener al menos 2 caracteres.');
-  }
-
-  if (!data.apellido?.trim()) {
-    addError(errors, 'apellido', 'El apellido es requerido.');
-  } else if (data.apellido.trim().length < 2) {
-    addError(errors, 'apellido', 'El apellido debe tener al menos 2 caracteres.');
-  }
-
-  validateEmail(data.email, errors);
-  validatePassword(data.password, errors);
-
-  if (!data.confirmPassword) {
-    addError(errors, 'confirmPassword', 'Confirmá tu contraseña.');
-  } else if (data.password !== data.confirmPassword) {
-    addError(errors, 'confirmPassword', 'Las contraseñas no coinciden.');
-  }
-
-  if (!data.provincia?.trim()) {
-    addError(errors, 'provincia', 'La provincia es requerida.');
-  }
-
-  if (!data.ciudad?.trim()) {
-    addError(errors, 'ciudad', 'La ciudad es requerida.');
-  }
-
-  if (!data.zona?.trim()) {
-    addError(errors, 'zona', 'La zona es requerida.');
-  }
-
-  if (!data.acceptTerms) {
-    addError(errors, 'acceptTerms', 'Debés aceptar los términos para continuar.');
-  }
-
-  return errors;
-};
-
-export const validateInstitutionRegister = (data) => {
-  const errors = {};
-
-  if (!data.contactName?.trim()) {
-    addError(errors, 'contactName', 'El nombre del responsable es requerido.');
-  } else if (data.contactName.trim().length < 2) {
-    addError(errors, 'contactName', 'El nombre debe tener al menos 2 caracteres.');
-  }
-
-  validateEmail(data.email, errors);
-  validatePassword(data.password, errors);
-
-  if (!data.confirmPassword) {
-    addError(errors, 'confirmPassword', 'Confirmá tu contraseña.');
-  } else if (data.password !== data.confirmPassword) {
-    addError(errors, 'confirmPassword', 'Las contraseñas no coinciden.');
-  }
-
-  if (!data.institutionName?.trim()) {
-    addError(errors, 'institutionName', 'El nombre o razón social es requerido.');
-  } else if (data.institutionName.trim().length < 2) {
-    addError(errors, 'institutionName', 'El nombre o razón social es requerido.');
-  }
-
-  if (!data.cuit?.trim()) {
-    addError(errors, 'cuit', 'El CUIT es requerido.');
-  } else if (!isValidCuit(data.cuit.trim())) {
-    addError(errors, 'cuit', 'Ingresá un CUIT válido (ej: 20-12345678-9).');
-  }
-
-  if (!data.institutionType?.trim()) {
-    addError(errors, 'institutionType', 'Debes seleccionar un tipo de institución.');
-  }
-
-  if (!data.phone?.trim()) {
-    addError(errors, 'phone', 'El teléfono de contacto es requerido.');
-  } else if (!phoneRegex.test(data.phone.trim())) {
-    addError(errors, 'phone', 'Ingresá un teléfono válido.');
-  }
-
-  if (!data.provincia?.trim()) {
-    addError(errors, 'provincia', 'La provincia es requerida.');
-  }
-
-  if (!data.ciudad?.trim()) {
-    addError(errors, 'ciudad', 'La ciudad es requerida.');
-  }
-
-  if (!data.zona?.trim()) {
-    addError(errors, 'zona', 'La zona es requerida.');
-  }
-
-  if (!data.address?.trim()) {
-    addError(errors, 'address', 'La dirección es requerida.');
-  } else if (data.address.trim().length < 5) {
-    addError(errors, 'address', 'La dirección debe ser más detallada.');
-  }
-
-  if (!data.termsAccepted) {
-    addError(errors, 'termsAccepted', 'Debés aceptar los términos para continuar.');
-  }
-
-  return errors;
-};
+export const institutionRegisterSchema = z.object({
+  contactName: z.string().trim().min(1, 'El nombre del responsable es requerido.').min(2, 'El nombre debe tener al menos 2 caracteres.'),
+  email: z.string().trim().min(1, 'El correo electrónico institucional es requerido.').regex(emailRegex, 'Ingresá un correo válido.'),
+  password: z
+    .string()
+    .min(1, 'La contraseña es requerida.')
+    .min(8, 'La contraseña debe tener al menos 8 caracteres.')
+    .regex(/[A-Z]/, 'La contraseña debe contener al menos una mayúscula.')
+    .regex(/[0-9]/, 'La contraseña debe contener al menos un número.'),
+  confirmPassword: z.string().min(1, 'Confirmá tu contraseña.'),
+  institutionName: z.string().trim().min(1, 'El nombre o razón social es requerido.').min(2, 'El nombre o razón social es requerido.'),
+  cuit: z.string().trim().min(1, 'El CUIT es requerido.').refine(isValidCuit, { message: 'Ingresá un CUIT válido (ej: 20-12345678-9).' }),
+  institutionType: z.string().trim().min(1, 'Debes seleccionar un tipo de institución.'),
+  phone: z.string().trim().min(1, 'El teléfono de contacto es requerido.').regex(phoneRegex, 'Ingresá un teléfono válido.'),
+  provincia: z.string().trim().min(1, 'La provincia es requerida.'),
+  ciudad: z.string().trim().min(1, 'La ciudad es requerida.'),
+  zona: z.string().trim().min(1, 'La zona es requerida.'),
+  address: z.string().trim().min(1, 'La dirección es requerida.').min(5, 'La dirección debe ser más detallada.'),
+  termsAccepted: z.any().refine((val) => val === true, {
+    message: 'Debés aceptar los términos para continuar.'
+  })
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Las contraseñas no coinciden.",
+  path: ["confirmPassword"],
+});
 
 export const validateVerifyEmail = (data) => {
   const errors = {};

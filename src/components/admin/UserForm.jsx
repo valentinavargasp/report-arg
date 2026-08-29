@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import apiClient from "@/services/apiClient";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 const rolesOpciones   = ["ciudadano", "admin", "institucion"];
@@ -33,8 +34,8 @@ export default function UserForm({ usuarioId = null }) {
     if (!isEdit) return;
     async function cargarUsuario() {
       try {
-        const res  = await fetch(`${API_URL}/api/admin/usuarios/${usuarioId}`);
-        const data = await res.json();
+        const res  = await apiClient.get(`/admin/usuarios/${usuarioId}`);
+        const data = res.data;
         if (data.ok) {
           setForm(prev => ({
             ...prev,
@@ -74,11 +75,6 @@ export default function UserForm({ usuarioId = null }) {
     setApiError("");
 
     try {
-      const url = isEdit
-        ? `${API_URL}/api/admin/usuarios/${usuarioId}`
-        : `${API_URL}/api/admin/usuarios`;
-      const method = isEdit ? 'PUT' : 'POST';
-
       const body = {
         email: payload.email,
         nombre: payload.nombre,
@@ -91,12 +87,8 @@ export default function UserForm({ usuarioId = null }) {
         body.password = payload.password;
       }
 
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      const data = await res.json();
+      const res = await (isEdit ? apiClient.put : apiClient.post)(isEdit ? `/admin/usuarios/${usuarioId}` : `/admin/usuarios`, body);
+      const data = res.data;
 
       if (!data.ok) {
         setApiError(data.mensaje || 'No se pudo guardar el usuario');
@@ -136,14 +128,12 @@ export default function UserForm({ usuarioId = null }) {
     const formData = new FormData();
     formData.append('foto', file);
 
-    const res  = await fetch(`${API_URL}/api/admin/upload/foto`, {
-      method: 'POST',
-      body: formData,
+    const res  = await apiClient.post(`/admin/upload/foto`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
     });
-    const raw = await res.text();
-    const data = raw ? JSON.parse(raw) : {};
+    const data = res.data || {};
 
-    if (res.ok && data.ok) {
+    if (data.ok) {
       const nextForm = { ...form, foto: data.url };
       setForm(nextForm);
 

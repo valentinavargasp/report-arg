@@ -15,46 +15,16 @@ import {
   PhoneIcon,
   UserIcon,
 } from '@heroicons/react/20/solid';
-import { hasValidationErrors, validateInstitutionRegister } from '@/utils/schemas';
+import { institutionRegisterSchema } from '@/utils/schemas';
 import AuthSplitLayout from '@/components/auth/AuthSplitLayout';
 import StepIndicator from '@/components/ui/StepIndicator';
 import { toast } from 'sonner';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { authService } from '@/services/authService';
+import Image from 'next/image';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
-const PROVINCIAS_AR = [
-  'Buenos Aires','Catamarca','Chaco','Chubut','Ciudad Autónoma de Buenos Aires',
-  'Córdoba','Corrientes','Entre Ríos','Formosa','Jujuy','La Pampa','La Rioja',
-  'Mendoza','Misiones','Neuquén','Río Negro','Salta','San Juan','San Luis',
-  'Santa Cruz','Santa Fe','Santiago del Estero','Tierra del Fuego','Tucumán',
-];
-
-const CIUDADES_AR = {
-  'Buenos Aires': ['La Plata','Mar del Plata','Quilmes','Lanús','Lomas de Zamora','Morón','Tres de Febrero','San Martín','Tigre','Bahía Blanca','Tandil','Pergamino','Otra'],
-  'Catamarca': ['San Fernando del Valle de Catamarca','Santa Rosa','Tinogasta','Otra'],
-  'Chaco': ['Resistencia','Barranqueras','Presidencia Roque Sáenz Peña','Otra'],
-  'Chubut': ['Rawson','Comodoro Rivadavia','Puerto Madryn','Trelew','Otra'],
-  'Ciudad Autónoma de Buenos Aires': ['CABA'],
-  'Córdoba': ['Córdoba','Villa María','San Francisco','Río Cuarto','Alta Gracia','Villa Carlos Paz','Otra'],
-  'Corrientes': ['Corrientes','Goya','Curuzú Cuatiá','Otra'],
-  'Entre Ríos': ['Paraná','Concordia','Gualeguaychú','Otra'],
-  'Formosa': ['Formosa','Clorinda','Otra'],
-  'Jujuy': ['San Salvador de Jujuy','Palpalá','San Pedro','Otra'],
-  'La Pampa': ['Santa Rosa','General Pico','Otra'],
-  'La Rioja': ['La Rioja','Chilecito','Otra'],
-  'Mendoza': ['Mendoza','San Rafael','Godoy Cruz','Luján de Cuyo','Otra'],
-  'Misiones': ['Posadas','Oberá','Eldorado','Puerto Iguazú','Otra'],
-  'Neuquén': ['Neuquén','San Martín de los Andes','Zapala','Otra'],
-  'Río Negro': ['Viedma','Bariloche','Cipolletti','Otra'],
-  'Salta': ['Salta','San Ramón de la Nueva Orán','Tartagal','Otra'],
-  'San Juan': ['San Juan','Rawson','Rivadavia','Otra'],
-  'San Luis': ['San Luis','Villa Mercedes','Otra'],
-  'Santa Cruz': ['Río Gallegos','Caleta Olivia','Otra'],
-  'Santa Fe': ['Santa Fe','Rosario','Rafaela','Reconquista','Venado Tuerto','Otra'],
-  'Santiago del Estero': ['Santiago del Estero','La Banda','Otra'],
-  'Tierra del Fuego': ['Ushuaia','Río Grande','Otra'],
-  'Tucumán': ['San Miguel de Tucumán','Concepción','Banda del Río Salí','Otra'],
-};
+import { PROVINCIAS_AR, CIUDADES_AR } from '@/utils/constants';
 
 const institutionTypes = [
   { key: 'municipio', label: 'Municipio' },
@@ -82,15 +52,25 @@ const initialForm = {
 };
 
 export default function InstitutionRegister() {
-  const [formData, setFormData] = useState(initialForm);
-  const [errors, setErrors] = useState({});
-  const [touched, setTouched] = useState({});
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: zodResolver(institutionRegisterSchema),
+    mode: 'onTouched',
+    defaultValues: initialForm,
+  });
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [serverError, setServerError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [step] = useState(1);
   const router = useRouter();
+  
+  const provinciaSeleccionada = watch('provincia');
 
   const formatCuit = (value) => {
     const digits = value.replace(/\D/g, '').slice(0, 11);
@@ -106,98 +86,18 @@ export default function InstitutionRegister() {
     return `${digits.slice(0, 2)}-${digits.slice(2, 10)}-${digits.slice(10)}`;
   };
 
-  const syncFieldErrors = (nextData, nextTouched, fields) => {
-    const validationErrors = validateInstitutionRegister(nextData);
-
-    setErrors((prev) => {
-      const nextErrors = { ...prev };
-
-      fields.forEach((field) => {
-        const shouldShow = nextTouched[field] || field === 'password' || field === 'confirmPassword' || field === 'cuit';
-        if (shouldShow && validationErrors[field]) {
-          nextErrors[field] = validationErrors[field];
-        } else {
-          delete nextErrors[field];
-        }
-      });
-
-      return nextErrors;
-    });
-  };
-
-  const handleChange = (name, value) => {
-    const normalizedValue = name === 'cuit' ? formatCuit(value) : value;
-    let nextData = { ...formData, [name]: normalizedValue };
-    if (name === 'provincia') nextData = { ...nextData, ciudad: '' };
-    const nextTouched = { ...touched, [name]: true };
-    const fieldsToSync = name === 'password' || name === 'confirmPassword'
-      ? ['password', 'confirmPassword']
-      : [name];
-
-    setFormData(nextData);
-    setTouched(nextTouched);
-    syncFieldErrors(nextData, nextTouched, fieldsToSync);
-  };
-
-  const handleBlur = (name) => {
-    const nextTouched = { ...touched, [name]: true };
-    const fieldsToSync = name === 'password' || name === 'confirmPassword'
-      ? ['password', 'confirmPassword']
-      : [name];
-
-    setTouched(nextTouched);
-    syncFieldErrors(formData, nextTouched, fieldsToSync);
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const onSubmit = async (data) => {
     setServerError('');
 
-    const validationErrors = validateInstitutionRegister(formData);
-    setErrors(validationErrors);
-    setTouched({
-      contactName: true,
-      email: true,
-      password: true,
-      confirmPassword: true,
-      institutionName: true,
-      cuit: true,
-      institutionType: true,
-      phone: true,
-      provincia: true,
-      ciudad: true,
-      zona: true,
-      address: true,
-      termsAccepted: true,
-    });
-
-    if (hasValidationErrors(validationErrors)) {
-      return;
-    }
-
-    setIsSubmitting(true);
-
     try {
-      const response = await fetch(`${API_URL}/api/auth/register-institution`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Ocurrió un error en el registro');
-      }
+      await authService.registerInstitution(data);
 
       toast.success('Registro exitoso. Te enviamos un código de verificación.');
       setTimeout(() => {
-        router.push(`/verify?email=${encodeURIComponent(formData.email)}&type=institution`);
+        router.push(`/verify?email=${encodeURIComponent(data.email)}&type=institution`);
       }, 1500);
     } catch (submitError) {
-      setServerError(submitError.message || 'Ocurrió un error en el registro');
-    } finally {
-      setIsSubmitting(false);
+      setServerError(submitError.response?.data?.error || submitError.message || 'Ocurrió un error en el registro');
     }
   };
 
@@ -226,7 +126,7 @@ export default function InstitutionRegister() {
       <div className="login-right">
         <div className="login-form login-form-register">
           <div className="login-logo-mobile">
-            <img src="/logo.png" alt="logo-reportarg" className="login-logo-mobile-img" />
+            <Image src="/logo.png" alt="logo-reportarg" className="login-logo-mobile-img" width={180} height={40} unoptimized />
             <p className="login-logo-mobile-subtitle">Registro institucional</p>
           </div>
 
@@ -243,23 +143,23 @@ export default function InstitutionRegister() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} noValidate>
+          <form onSubmit={handleSubmit(onSubmit)} noValidate>
             <div className="form-group">
               <label className="form-label" htmlFor="contactName">NOMBRE COMPLETO DEL RESPONSABLE <span className="form-required">*</span></label>
               <div className="form-input-wrapper">
-                <input type="text" id="contactName" className="form-input" placeholder="Ej. Juan Perez" value={formData.contactName} onChange={(e) => handleChange('contactName', e.target.value)} onBlur={() => handleBlur('contactName')} />
+                <input type="text" id="contactName" className="form-input" placeholder="Ej. Juan Perez" {...register('contactName')} />
                 <div className="form-input-icon"><UserIcon aria-hidden /></div>
               </div>
-              {errors.contactName && <p className="register-error">{errors.contactName}</p>}
+              {errors.contactName && <p className="register-error">{errors.contactName.message}</p>}
             </div>
 
             <div className="form-group">
               <label className="form-label" htmlFor="email">CORREO ELECTRÓNICO INSTITUCIONAL <span className="form-required">*</span></label>
               <div className="form-input-wrapper">
-                <input type="email" id="email" className="form-input" placeholder="institucion@dominio.com" value={formData.email} onChange={(e) => handleChange('email', e.target.value)} onBlur={() => handleBlur('email')} />
+                <input type="email" id="email" className="form-input" placeholder="institucion@dominio.com" {...register('email')} />
                 <div className="form-input-icon"><EnvelopeIcon aria-hidden /></div>
               </div>
-              {errors.email && <p className="register-error">{errors.email}</p>}
+              {errors.email && <p className="register-error">{errors.email.message}</p>}
             </div>
 
             <div className="register-grid">
@@ -267,50 +167,61 @@ export default function InstitutionRegister() {
                 <label className="form-label" htmlFor="password">CONTRASEÑA <span className="form-required">*</span></label>
                 <div className="form-input-wrapper">
                   <div className="form-input-icon form-input-icon-left"><LockClosedIcon aria-hidden /></div>
-                  <input type={showPassword ? 'text' : 'password'} id="password" className="form-input has-left-icon" placeholder="••••••••" value={formData.password} onChange={(e) => handleChange('password', e.target.value)} onBlur={() => handleBlur('password')} />
+                  <input type={showPassword ? 'text' : 'password'} id="password" className="form-input has-left-icon" placeholder="••••••••" {...register('password')} />
                   <button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
                     {showPassword ? <EyeSlashIcon aria-hidden /> : <EyeIcon aria-hidden />}
                   </button>
                 </div>
-                {errors.password && <p className="register-error">{errors.password}</p>}
+                {errors.password && <p className="register-error">{errors.password.message}</p>}
               </div>
 
               <div className="form-group">
                 <label className="form-label" htmlFor="confirmPassword">CONFIRMAR CONTRASEÑA <span className="form-required">*</span></label>
                 <div className="form-input-wrapper">
                   <div className="form-input-icon form-input-icon-left"><LockClosedIcon aria-hidden /></div>
-                  <input type={showConfirmPassword ? 'text' : 'password'} id="confirmPassword" className="form-input has-left-icon" placeholder="••••••••" value={formData.confirmPassword} onChange={(e) => handleChange('confirmPassword', e.target.value)} onBlur={() => handleBlur('confirmPassword')} />
+                  <input type={showConfirmPassword ? 'text' : 'password'} id="confirmPassword" className="form-input has-left-icon" placeholder="••••••••" {...register('confirmPassword')} />
                   <button type="button" className="password-toggle" onClick={() => setShowConfirmPassword(!showConfirmPassword)} aria-label={showConfirmPassword ? 'Ocultar confirmación' : 'Mostrar confirmación'}>
                     {showConfirmPassword ? <EyeSlashIcon aria-hidden /> : <EyeIcon aria-hidden />}
                   </button>
                 </div>
-                {errors.confirmPassword && <p className="register-error">{errors.confirmPassword}</p>}
+                {errors.confirmPassword && <p className="register-error">{errors.confirmPassword.message}</p>}
               </div>
             </div>
 
             <div className="form-group">
               <label className="form-label" htmlFor="institutionName">NOMBRE O RAZÓN SOCIAL <span className="form-required">*</span></label>
               <div className="form-input-wrapper">
-                <input type="text" id="institutionName" className="form-input" placeholder="Ej. Hospital Municipal San Martin" value={formData.institutionName} onChange={(e) => handleChange('institutionName', e.target.value)} onBlur={() => handleBlur('institutionName')} />
+                <input type="text" id="institutionName" className="form-input" placeholder="Ej. Hospital Municipal San Martin" {...register('institutionName')} />
                 <div className="form-input-icon"><BuildingOffice2Icon aria-hidden /></div>
               </div>
-              {errors.institutionName && <p className="register-error">{errors.institutionName}</p>}
+              {errors.institutionName && <p className="register-error">{errors.institutionName.message}</p>}
             </div>
 
             <div className="register-grid">
               <div className="form-group">
                 <label className="form-label" htmlFor="cuit">CUIT <span className="form-required">*</span></label>
                 <div className="form-input-wrapper">
-                  <input type="text" id="cuit" className="form-input" placeholder="30-12345678-9" value={formData.cuit} onChange={(e) => handleChange('cuit', e.target.value)} onBlur={() => handleBlur('cuit')} />
+                  <input
+                    type="text"
+                    id="cuit"
+                    className="form-input"
+                    placeholder="30-12345678-9"
+                    {...register('cuit', {
+                      onChange: (e) => {
+                        e.target.value = formatCuit(e.target.value);
+                        setValue('cuit', e.target.value, { shouldValidate: true });
+                      }
+                    })}
+                  />
                   <div className="form-input-icon"><IdentificationIcon aria-hidden /></div>
                 </div>
-                {errors.cuit && <p className="register-error">{errors.cuit}</p>}
+                {errors.cuit && <p className="register-error">{errors.cuit.message}</p>}
               </div>
 
               <div className="form-group">
                 <label className="form-label" htmlFor="institutionType">TIPO DE INSTITUCIÓN <span className="form-required">*</span></label>
                 <div className="form-input-wrapper form-select-wrapper">
-                  <select id="institutionType" className="form-input form-select" value={formData.institutionType} onChange={(e) => handleChange('institutionType', e.target.value)} onBlur={() => handleBlur('institutionType')}>
+                  <select id="institutionType" className="form-input form-select" {...register('institutionType')}>
                     <option value="">Selecciona una opción</option>
                     {institutionTypes.map((type) => (
                       <option key={type.key} value={type.key}>{type.label}</option>
@@ -318,7 +229,7 @@ export default function InstitutionRegister() {
                   </select>
                   <div className="form-input-icon"><ChevronDownIcon aria-hidden /></div>
                 </div>
-                {errors.institutionType && <p className="register-error">{errors.institutionType}</p>}
+                {errors.institutionType && <p className="register-error">{errors.institutionType.message}</p>}
               </div>
             </div>
 
@@ -326,19 +237,19 @@ export default function InstitutionRegister() {
               <div className="form-group">
                 <label className="form-label" htmlFor="phone">TELÉFONO DE CONTACTO <span className="form-required">*</span></label>
                 <div className="form-input-wrapper">
-                  <input type="text" id="phone" className="form-input" placeholder="221 555 1234" value={formData.phone} onChange={(e) => handleChange('phone', e.target.value)} onBlur={() => handleBlur('phone')} />
+                  <input type="text" id="phone" className="form-input" placeholder="221 555 1234" {...register('phone')} />
                   <div className="form-input-icon"><PhoneIcon aria-hidden /></div>
                 </div>
-                {errors.phone && <p className="register-error">{errors.phone}</p>}
+                {errors.phone && <p className="register-error">{errors.phone.message}</p>}
               </div>
 
               <div className="form-group">
                 <label className="form-label" htmlFor="address">DIRECCIÓN <span className="form-required">*</span></label>
                 <div className="form-input-wrapper">
-                  <input type="text" id="address" className="form-input" placeholder="Calle 123, número, barrio" value={formData.address} onChange={(e) => handleChange('address', e.target.value)} onBlur={() => handleBlur('address')} />
+                  <input type="text" id="address" className="form-input" placeholder="Calle 123, número, barrio" {...register('address')} />
                   <div className="form-input-icon"><MapPinIcon aria-hidden /></div>
                 </div>
-                {errors.address && <p className="register-error">{errors.address}</p>}
+                {errors.address && <p className="register-error">{errors.address.message}</p>}
               </div>
             </div>
 
@@ -349,16 +260,14 @@ export default function InstitutionRegister() {
                   <select
                     id="provincia"
                     className="form-input form-select"
-                    value={formData.provincia}
-                    onChange={(e) => handleChange('provincia', e.target.value)}
-                    onBlur={() => handleBlur('provincia')}
+                    {...register('provincia')}
                   >
                     <option value="">Seleccioná una provincia</option>
                     {PROVINCIAS_AR.map(p => <option key={p} value={p}>{p}</option>)}
                   </select>
                   <div className="form-input-icon"><ChevronDownIcon aria-hidden /></div>
                 </div>
-                {errors.provincia && <p className="register-error">{errors.provincia}</p>}
+                {errors.provincia && <p className="register-error">{errors.provincia.message}</p>}
               </div>
               <div className="form-group">
                 <label className="form-label" htmlFor="ciudad">CIUDAD <span className="form-required">*</span></label>
@@ -366,31 +275,29 @@ export default function InstitutionRegister() {
                   <select
                     id="ciudad"
                     className="form-input form-select"
-                    value={formData.ciudad}
-                    onChange={(e) => handleChange('ciudad', e.target.value)}
-                    onBlur={() => handleBlur('ciudad')}
-                    disabled={!formData.provincia}
+                    {...register('ciudad')}
+                    disabled={!provinciaSeleccionada}
                   >
-                    <option value="">{formData.provincia ? 'Seleccioná una ciudad' : 'Primero elegí provincia'}</option>
-                    {(CIUDADES_AR[formData.provincia] || []).map(c => <option key={c} value={c}>{c}</option>)}
+                    <option value="">{provinciaSeleccionada ? 'Seleccioná una ciudad' : 'Primero elegí provincia'}</option>
+                    {(CIUDADES_AR[provinciaSeleccionada] || []).map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                   <div className="form-input-icon"><ChevronDownIcon aria-hidden /></div>
                 </div>
-                {errors.ciudad && <p className="register-error">{errors.ciudad}</p>}
+                {errors.ciudad && <p className="register-error">{errors.ciudad.message}</p>}
               </div>
             </div>
 
             <div className="form-group">
               <label className="form-label" htmlFor="zona">ZONA <span className="form-required">*</span></label>
-              <input type="text" id="zona" className="form-input" placeholder="Centro" value={formData.zona} onChange={(e) => handleChange('zona', e.target.value)} onBlur={() => handleBlur('zona')} />
-              {errors.zona && <p className="register-error">{errors.zona}</p>}
+              <input type="text" id="zona" className="form-input" placeholder="Centro" {...register('zona')} />
+              {errors.zona && <p className="register-error">{errors.zona.message}</p>}
             </div>
 
             <label className="register-checkbox">
-              <input type="checkbox" checked={formData.termsAccepted} onChange={(e) => handleChange('termsAccepted', e.target.checked)} onBlur={() => handleBlur('termsAccepted')} />
+              <input type="checkbox" {...register('termsAccepted')} />
               <span>Acepto los términos y condiciones <span className="form-required">*</span></span>
             </label>
-            {errors.termsAccepted && <p className="register-error">{errors.termsAccepted}</p>}
+            {errors.termsAccepted && <p className="register-error">{errors.termsAccepted.message}</p>}
 
             {serverError && <p className="register-error">{serverError}</p>}
 
