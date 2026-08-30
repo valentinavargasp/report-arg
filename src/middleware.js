@@ -1,5 +1,6 @@
-import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
+
+import { getToken } from "next-auth/jwt";
 
 export async function middleware(request) {
   const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
@@ -14,7 +15,6 @@ export async function middleware(request) {
   if (request.nextUrl.pathname.startsWith("/admin") && token.role !== "admin") {
     return NextResponse.redirect(new URL("/home", request.url));
   }
-
   return NextResponse.next();
 }
 

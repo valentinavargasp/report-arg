@@ -15,7 +15,6 @@ export default function CrearCategoriaPage() {
   const [success, setSuccess] = useState("");
 
   const [form, setForm] = useState({
-    codigo: "",
     nombre: "",
     descripcion: "",
     tipo: "",
@@ -35,7 +34,6 @@ export default function CrearCategoriaPage() {
     setError("");
     setSuccess("");
 
-    if (!form.codigo.trim()) return setError("El código es obligatorio");
     if (!form.nombre.trim()) return setError("El nombre es obligatorio");
     if (!form.tipo) return setError("El tipo es obligatorio");
 
@@ -43,7 +41,6 @@ export default function CrearCategoriaPage() {
     try {
       const res = await apiClient.post(`/admin/categorias`, {
         ...form,
-        codigo: form.codigo.trim().toUpperCase(),
         nombre: form.nombre.trim(),
         orden: Number(form.orden),
       });
@@ -80,21 +77,14 @@ export default function CrearCategoriaPage() {
               NUEVA CATEGORÍA
             </p>
 
-            {/* Código y Nombre */}
-            <div style={{ display: "flex", gap: 16, marginBottom: 16, flexWrap: "wrap" }}>
-              <div style={{ flex: 1, minWidth: 160 }}>
-                <label className="form-label">CÓDIGO</label>
-                <input name="codigo" value={form.codigo} onChange={handleChange}
-                  placeholder="Ej: REC-LUM"
-                  className="input" style={{ display: "block", width: "100%", marginTop: 6, boxSizing: "border-box" }} />
-              </div>
-              <div style={{ flex: 1, minWidth: 160 }}>
+            {/*Nombre*/}
+              <div style={{ marginBottom: 16 }}>
                 <label className="form-label">NOMBRE</label>
                 <input name="nombre" value={form.nombre} onChange={handleChange}
                   placeholder="Ej: Cortes de luz, Inundaciones..."
                   className="input" style={{ display: "block", width: "100%", marginTop: 6, boxSizing: "border-box" }} />
               </div>
-            </div>
+            
 
             {/* Descripción */}
             <div style={{ marginBottom: 16 }}>
@@ -105,7 +95,7 @@ export default function CrearCategoriaPage() {
                 style={{ display: "block", width: "100%", marginTop: 6, resize: "none", boxSizing: "border-box" }} />
             </div>
 
-            {/* Tipo, Orden y Estado */}
+            {/* Tipo, Orden y Estado  */}
             <div style={{ display: "flex", gap: 16, alignItems: "flex-end", flexWrap: "wrap" }}>
               <div style={{ flex: 1, minWidth: 140 }}>
                 <label className="form-label">TIPO</label>
@@ -145,11 +135,22 @@ export default function CrearCategoriaPage() {
               </div>
             )}
 
-            {/* Botón */}
-            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 24 }}>
+            {/* Botones */}
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, marginTop: 24 }}>
+              <button onClick={() => router.push("/admin/categories")}
+                style={{
+                  padding: "10px 24px",
+                  border: "1px solid var(--color-primary)",
+                  borderRadius: 8, background: "#fff",
+                  color: "var(--color-primary)",
+                  fontSize: 14, cursor: "pointer",
+                  fontWeight: 600,
+                }}>
+                Cancelar
+              </button>
               <button onClick={handleSubmit} disabled={saving}
                 style={{
-                  padding: "10px 24px", background: saving ? "var(--color-muted)" : "var(--color-primary)",
+                  padding: "10px 24px", background: saving ? "#aaa" : "var(--color-primary)",
                   color: "#fff", border: "none", borderRadius: 8,
                   fontSize: 14, fontWeight: "bold", cursor: saving ? "not-allowed" : "pointer",
                 }}>
