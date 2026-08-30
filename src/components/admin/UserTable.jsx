@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import apiClient from "@/services/apiClient";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
-const rolColor    = { admin: "role-admin", moderador: "role-moderator", ciudadano: "role-user" };
+const rolColor = { admin: "role-admin", moderador: "role-moderator", ciudadano: "role-user" };
 const estadoColor = { activo: "status-active", inactivo: "status-inactive" };
 
 function Avatar({ nombre, foto }) {
@@ -16,14 +15,14 @@ function Avatar({ nombre, foto }) {
 
 export default function UserTable() {
   const router = useRouter();
-  const [usuarios, setUsuarios]         = useState([]);
-  const [loading, setLoading]           = useState(true);
-  const [error, setError]               = useState("");
-  const [busqueda, setBusqueda]         = useState("");
-  const [filtroRol, setFiltroRol]       = useState("Todos");
+  const [usuarios, setUsuarios] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [busqueda, setBusqueda] = useState("");
+  const [filtroRol, setFiltroRol] = useState("Todos");
   const [filtroEstado, setFiltroEstado] = useState("Todos");
   const [confirmDelete, setConfirmDelete] = useState(null);
-  const [deletingId, setDeletingId]     = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     fetchUsuarios();
@@ -34,12 +33,12 @@ export default function UserTable() {
     setError("");
     try {
       const params = new URLSearchParams();
-      if (busqueda)                params.append('busqueda', busqueda);
-      if (filtroRol !== 'Todos')   params.append('rol', filtroRol);
+      if (busqueda) params.append('busqueda', busqueda);
+      if (filtroRol !== 'Todos') params.append('rol', filtroRol);
       if (filtroEstado !== 'Todos') params.append('estado', filtroEstado);
 
-      const res  = await fetch(`${API_URL}/api/admin/usuarios?${params}`);
-      const data = await res.json();
+      const res = await apiClient.get(`/admin/usuarios?${params}`);
+      const data = res.data;
       if (data.ok) {
         setError("");
         setUsuarios(data.data);
@@ -56,8 +55,8 @@ export default function UserTable() {
   async function eliminar(id) {
     setDeletingId(id);
     try {
-      const res  = await fetch(`${API_URL}/api/admin/usuarios/${id}`, { method: 'DELETE' });
-      const data = await res.json();
+      const res = await apiClient.delete(`/admin/usuarios/${id}`);
+      const data = res.data;
       if (data.ok) {
         setUsuarios(prev => prev.filter(u => u.id !== id));
       } else {

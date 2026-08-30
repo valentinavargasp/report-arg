@@ -4,8 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { Search, Bell, MapPin, ChevronDown, User, LogOut, Menu, Shield } from "lucide-react";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+import apiClient from "@/services/apiClient";
+import Image from "next/image";
 
 const ROL_LABEL = {
   admin:      "Administrador",
@@ -25,8 +25,8 @@ export default function HomeNavbar({ onMenuClick = () => {} }) {
   // Cargar datos del perfil cuando hay sesión
   useEffect(() => {
     if (!session?.user?.id) return;
-    fetch(`${API_URL}/api/admin/usuarios/${session.user.id}`)
-      .then(r => r.json())
+    apiClient.get(`/admin/usuarios/${session.user.id}`)
+      .then(r => r.data)
       .then(d => { if (d.ok) setPerfil(d.data); })
       .catch(() => {});
   }, [session?.user?.id]);
@@ -94,9 +94,9 @@ export default function HomeNavbar({ onMenuClick = () => {} }) {
               </p>
             </div>
 
-            <div className="home-avatar">
+            <div className="home-avatar" style={{ position: "relative" }}>
               {fotoUrl
-                ? <img src={fotoUrl} alt="avatar" />
+                ? <Image src={fotoUrl} alt="avatar" fill unoptimized style={{ objectFit: "cover" }} />
                 : iniciales}
             </div>
 

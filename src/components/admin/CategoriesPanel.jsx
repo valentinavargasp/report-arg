@@ -3,30 +3,29 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Pencil, MinusCircle, AlertTriangle } from "lucide-react";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import apiClient from "@/services/apiClient";
 
 const tipoBadge = {
-  reclamo:    { label: "Reclamo",    bg: "#dbeafe", color: "#1e40af" },
+  reclamo: { label: "Reclamo", bg: "#dbeafe", color: "#1e40af" },
   comunicado: { label: "Comunicado", bg: "#fef9c3", color: "#854d0e" },
-  ambos:      { label: "Ambos",      bg: "#dcfce7", color: "#166534" },
+  ambos: { label: "Ambos", bg: "#dcfce7", color: "#166534" },
 };
 
 export default function CategoriesPanel() {
   const router = useRouter();
-  const [categorias,     setCategorias]     = useState([]);
-  const [loading,        setLoading]        = useState(true);
-  const [error,          setError]          = useState("");
-  const [successMsg,     setSuccessMsg]     = useState("");
-  const [confirmBaja,    setConfirmBaja]    = useState(null);
-  const [bajando,        setBajando]        = useState(false);
+  const [categorias, setCategorias] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+  const [confirmBaja, setConfirmBaja] = useState(null);
+  const [bajando, setBajando] = useState(false);
 
   // Filtros
-  const [filtroTipo,    setFiltroTipo]    = useState("");
-  const [filtroEstado,  setFiltroEstado]  = useState("");
+  const [filtroTipo, setFiltroTipo] = useState("");
+  const [filtroEstado, setFiltroEstado] = useState("");
 
   // Paginación
-  const [pagina,    setPagina]    = useState(1);
+  const [pagina, setPagina] = useState(1);
   const [porPagina, setPorPagina] = useState(5);
 
   useEffect(() => { fetchCategorias(); }, []);
@@ -37,8 +36,8 @@ export default function CategoriesPanel() {
   async function fetchCategorias() {
     setLoading(true);
     try {
-      const res  = await fetch(`${API_URL}/api/admin/categorias`);
-      const data = await res.json();
+      const res = await apiClient.get(`/admin/categorias`);
+      const data = res.data;
       if (data.ok) setCategorias(data.data);
     } catch {
       setError("Error al cargar categorías");
@@ -51,8 +50,8 @@ export default function CategoriesPanel() {
     if (!confirmBaja) return;
     setBajando(true);
     try {
-      const res  = await fetch(`${API_URL}/api/admin/categorias/${confirmBaja.id}/baja`, { method: "PATCH" });
-      const data = await res.json();
+      const res = await apiClient.patch(`/admin/categorias/${confirmBaja.id}/baja`);
+      const data = res.data;
       if (!data.ok) { setError(data.mensaje); return; }
       await fetchCategorias();
       setSuccessMsg("Categoría desactivada correctamente");
@@ -67,19 +66,19 @@ export default function CategoriesPanel() {
 
   // Filtrado local
   const categoriasFiltradas = categorias.filter(c => {
-    if (filtroTipo   && c.tipo   !== filtroTipo)   return false;
-    if (filtroEstado && c.estado !== filtroEstado)  return false;
+    if (filtroTipo && c.tipo !== filtroTipo) return false;
+    if (filtroEstado && c.estado !== filtroEstado) return false;
     return true;
   });
 
   const filtrosActivos = [
-    filtroTipo   && { label: `Tipo: ${filtroTipo}`,     onRemove: () => setFiltroTipo("") },
+    filtroTipo && { label: `Tipo: ${filtroTipo}`, onRemove: () => setFiltroTipo("") },
     filtroEstado && { label: `Estado: ${filtroEstado}`, onRemove: () => setFiltroEstado("") },
   ].filter(Boolean);
 
   // Paginación
   const totalFiltradas = categoriasFiltradas.length;
-  const totalPaginas   = porPagina === 0 ? 1 : Math.ceil(totalFiltradas / porPagina);
+  const totalPaginas = porPagina === 0 ? 1 : Math.ceil(totalFiltradas / porPagina);
   const categoriasVisibles = porPagina === 0
     ? categoriasFiltradas
     : categoriasFiltradas.slice((pagina - 1) * porPagina, pagina * porPagina);
@@ -217,12 +216,16 @@ export default function CategoriesPanel() {
                     </span>
                   </td>
                   <td>
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 12,
+                    <span style={{
+                      display: "inline-flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 12,
                       padding: "3px 10px", borderRadius: 99,
                       background: c.estado === "activo" ? "#dcfce7" : "#f3f4f6",
-                      color: c.estado === "activo" ? "var(--color-success)" : "var(--color-muted)" }}>
-                      <span style={{ width: 7, height: 7, borderRadius: "50%",
-                        background: c.estado === "activo" ? "var(--color-success)" : "#9ca3af", display: "inline-block" }} />
+                      color: c.estado === "activo" ? "var(--color-success)" : "var(--color-muted)"
+                    }}>
+                      <span style={{
+                        width: 7, height: 7, borderRadius: "50%",
+                        background: c.estado === "activo" ? "var(--color-success)" : "#9ca3af", display: "inline-block"
+                      }} />
                       {c.estado === "activo" ? "Activo" : "Inactivo"}
                     </span>
                   </td>
@@ -233,7 +236,7 @@ export default function CategoriesPanel() {
                         <button onClick={() => setConfirmBaja(c)}
                           title="Desactivar" style={{
                             background: "none", border: "none", cursor: "pointer",
-                        color: "var(--color-muted)", padding: 4,
+                            color: "var(--color-muted)", padding: 4,
                           }}>
                           <MinusCircle size={18} />
                         </button>
@@ -252,8 +255,10 @@ export default function CategoriesPanel() {
             </tbody>
           </table>
           {!loading && (
-            <div style={{ padding: "12px 20px", display: "flex", justifyContent: "space-between",
-              alignItems: "center", borderTop: "1px solid var(--color-border)", flexWrap: "wrap", gap: 10 }}>
+            <div style={{
+              padding: "12px 20px", display: "flex", justifyContent: "space-between",
+              alignItems: "center", borderTop: "1px solid var(--color-border)", flexWrap: "wrap", gap: 10
+            }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ fontSize: 13, color: "var(--color-muted)" }}>
                   {porPagina === 0 || totalFiltradas === 0
@@ -261,8 +266,10 @@ export default function CategoriesPanel() {
                     : `Mostrando ${Math.min((pagina - 1) * porPagina + 1, totalFiltradas)} a ${Math.min(pagina * porPagina, totalFiltradas)} de ${totalFiltradas} categorías`}
                 </span>
                 <select value={porPagina} onChange={e => { setPorPagina(Number(e.target.value)); setPagina(1); }}
-                  style={{ padding: "4px 8px", fontSize: 12, border: "1px solid var(--color-border)",
-                    borderRadius: 6, background: "#fff", cursor: "pointer", color: "var(--color-text)" }}>
+                  style={{
+                    padding: "4px 8px", fontSize: 12, border: "1px solid var(--color-border)",
+                    borderRadius: 6, background: "#fff", cursor: "pointer", color: "var(--color-text)"
+                  }}>
                   <option value={5}>5 por página</option>
                   <option value={10}>10 por página</option>
                   <option value={0}>Todas</option>
@@ -271,24 +278,30 @@ export default function CategoriesPanel() {
               {porPagina > 0 && totalPaginas > 1 && (
                 <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
                   <button onClick={() => setPagina(p => Math.max(p - 1, 1))} disabled={pagina === 1}
-                    style={{ padding: "5px 14px", border: "1px solid var(--color-border)", borderRadius: 6,
+                    style={{
+                      padding: "5px 14px", border: "1px solid var(--color-border)", borderRadius: 6,
                       background: "#fff", cursor: pagina === 1 ? "not-allowed" : "pointer",
-                      color: pagina === 1 ? "#bbb" : "var(--color-text)", fontSize: 13 }}>
+                      color: pagina === 1 ? "#bbb" : "var(--color-text)", fontSize: 13
+                    }}>
                     Anterior
                   </button>
                   {Array.from({ length: totalPaginas }, (_, i) => i + 1).map(n => (
                     <button key={n} onClick={() => setPagina(n)}
-                      style={{ padding: "5px 12px", border: "1px solid var(--color-border)", borderRadius: 6,
+                      style={{
+                        padding: "5px 12px", border: "1px solid var(--color-border)", borderRadius: 6,
                         background: n === pagina ? "var(--color-primary)" : "#fff",
                         color: n === pagina ? "#fff" : "var(--color-text)",
-                        cursor: "pointer", fontSize: 13, fontWeight: n === pagina ? 700 : 400 }}>
+                        cursor: "pointer", fontSize: 13, fontWeight: n === pagina ? 700 : 400
+                      }}>
                       {n}
                     </button>
                   ))}
                   <button onClick={() => setPagina(p => Math.min(p + 1, totalPaginas))} disabled={pagina === totalPaginas}
-                    style={{ padding: "5px 14px", border: "1px solid var(--color-border)", borderRadius: 6,
+                    style={{
+                      padding: "5px 14px", border: "1px solid var(--color-border)", borderRadius: 6,
                       background: "#fff", cursor: pagina === totalPaginas ? "not-allowed" : "pointer",
-                      color: pagina === totalPaginas ? "#bbb" : "var(--color-text)", fontSize: 13 }}>
+                      color: pagina === totalPaginas ? "#bbb" : "var(--color-text)", fontSize: 13
+                    }}>
                     Siguiente
                   </button>
                 </div>
@@ -307,12 +320,16 @@ export default function CategoriesPanel() {
                   <span style={{ fontSize: 11, fontWeight: 700, color: "var(--color-primary)" }}>{c.codigo}</span>
                   <p style={{ margin: "2px 0 0", fontWeight: 700, color: "#333", fontSize: 14 }}>{c.nombre}</p>
                 </div>
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontWeight: 700, fontSize: 12,
+                <span style={{
+                  display: "inline-flex", alignItems: "center", gap: 5, fontWeight: 700, fontSize: 12,
                   padding: "2px 8px", borderRadius: 99,
                   background: c.estado === "activo" ? "#dcfce7" : "#f3f4f6",
-                  color: c.estado === "activo" ? "var(--color-success)" : "var(--color-muted)" }}>
-                  <span style={{ width: 7, height: 7, borderRadius: "50%",
-                    background: c.estado === "activo" ? "var(--color-success)" : "#9ca3af", display: "inline-block" }} />
+                  color: c.estado === "activo" ? "var(--color-success)" : "var(--color-muted)"
+                }}>
+                  <span style={{
+                    width: 7, height: 7, borderRadius: "50%",
+                    background: c.estado === "activo" ? "var(--color-success)" : "#9ca3af", display: "inline-block"
+                  }} />
                   {c.estado === "activo" ? "Activo" : "Inactivo"}
                 </span>
               </div>
@@ -346,8 +363,10 @@ export default function CategoriesPanel() {
 
           {/* Paginación mobile */}
           {!loading && (
-            <div style={{ padding: "12px 4px", display: "flex", flexDirection: "column",
-              gap: 10, borderTop: "1px solid var(--color-border)", marginTop: 4 }}>
+            <div style={{
+              padding: "12px 4px", display: "flex", flexDirection: "column",
+              gap: 10, borderTop: "1px solid var(--color-border)", marginTop: 4
+            }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
                 <span style={{ fontSize: 12, color: "var(--color-muted)" }}>
                   {porPagina === 0 || totalFiltradas === 0
@@ -355,8 +374,10 @@ export default function CategoriesPanel() {
                     : `${Math.min((pagina - 1) * porPagina + 1, totalFiltradas)}–${Math.min(pagina * porPagina, totalFiltradas)} de ${totalFiltradas}`}
                 </span>
                 <select value={porPagina} onChange={e => { setPorPagina(Number(e.target.value)); setPagina(1); }}
-                  style={{ padding: "4px 8px", fontSize: 12, border: "1px solid var(--color-border)",
-                    borderRadius: 6, background: "#fff", cursor: "pointer", color: "var(--color-text)" }}>
+                  style={{
+                    padding: "4px 8px", fontSize: 12, border: "1px solid var(--color-border)",
+                    borderRadius: 6, background: "#fff", cursor: "pointer", color: "var(--color-text)"
+                  }}>
                   <option value={5}>5 por página</option>
                   <option value={10}>10 por página</option>
                   <option value={0}>Todas</option>
@@ -365,18 +386,22 @@ export default function CategoriesPanel() {
               {porPagina > 0 && totalPaginas > 1 && (
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6 }}>
                   <button onClick={() => setPagina(p => Math.max(p - 1, 1))} disabled={pagina === 1}
-                    style={{ flex: 1, padding: "8px 0", border: "1px solid var(--color-border)", borderRadius: 6,
+                    style={{
+                      flex: 1, padding: "8px 0", border: "1px solid var(--color-border)", borderRadius: 6,
                       background: "#fff", cursor: pagina === 1 ? "not-allowed" : "pointer",
-                      color: pagina === 1 ? "#bbb" : "var(--color-text)", fontSize: 13 }}>
+                      color: pagina === 1 ? "#bbb" : "var(--color-text)", fontSize: 13
+                    }}>
                     ← Anterior
                   </button>
                   <span style={{ fontSize: 13, color: "var(--color-muted)", whiteSpace: "nowrap" }}>
                     {pagina} / {totalPaginas}
                   </span>
                   <button onClick={() => setPagina(p => Math.min(p + 1, totalPaginas))} disabled={pagina === totalPaginas}
-                    style={{ flex: 1, padding: "8px 0", border: "1px solid var(--color-border)", borderRadius: 6,
+                    style={{
+                      flex: 1, padding: "8px 0", border: "1px solid var(--color-border)", borderRadius: 6,
                       background: "#fff", cursor: pagina === totalPaginas ? "not-allowed" : "pointer",
-                      color: pagina === totalPaginas ? "#bbb" : "var(--color-text)", fontSize: 13 }}>
+                      color: pagina === totalPaginas ? "#bbb" : "var(--color-text)", fontSize: 13
+                    }}>
                     Siguiente →
                   </button>
                 </div>

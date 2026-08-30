@@ -1,0 +1,33 @@
+export const PROVINCIAS_AR = [
+  'Buenos Aires','Catamarca','Chaco','Chubut','Ciudad Autónoma de Buenos Aires',
+  'Córdoba','Corrientes','Entre Ríos','Formosa','Jujuy','La Pampa','La Rioja',
+  'Mendoza','Misiones','Neuquén','Río Negro','Salta','San Juan','San Luis',
+  'Santa Cruz','Santa Fe','Santiago del Estero','Tierra del Fuego','Tucumán',
+];
+
+export const CIUDADES_AR = {
+  'Buenos Aires': ['La Plata','Mar del Plata','Quilmes','Lanús','Lomas de Zamora','Morón','Tres de Febrero','San Martín','Tigre','Bahía Blanca','Tandil','Pergamino','Otra'],
+  'Catamarca': ['San Fernando del Valle de Catamarca','Santa Rosa','Tinogasta','Otra'],
+  'Chaco': ['Resistencia','Barranqueras','Presidencia Roque Sáenz Peña','Otra'],
+  'Chubut': ['Rawson','Comodoro Rivadavia','Puerto Madryn','Trelew','Otra'],
+  'Ciudad Autónoma de Buenos Aires': ['CABA'],
+  'Córdoba': ['Córdoba','Villa María','San Francisco','Río Cuarto','Alta Gracia','Villa Carlos Paz','Otra'],
+  'Corrientes': ['Corrientes','Goya','Curuzú Cuatiá','Otra'],
+  'Entre Ríos': ['Paraná','Concordia','Gualeguaychú','Otra'],
+  'Formosa': ['Formosa','Clorinda','Otra'],
+  'Jujuy': ['San Salvador de Jujuy','Palpalá','San Pedro','Otra'],
+  'La Pampa': ['Santa Rosa','General Pico','Otra'],
+  'La Rioja': ['La Rioja','Chilecito','Otra'],
+  'Mendoza': ['Mendoza','San Rafael','Godoy Cruz','Luján de Cuyo','Otra'],
+  'Misiones': ['Posadas','Oberá','Eldorado','Puerto Iguazú','Otra'],
+  'Neuquén': ['Neuquén','San Martín de los Andes','Zapala','Otra'],
+  'Río Negro': ['Viedma','Bariloche','Cipolletti','Otra'],
+  'Salta': ['Salta','San Ramón de la Nueva Orán','Tartagal','Otra'],
+  'San Juan': ['San Juan','Rawson','Rivadavia','Otra'],
+  'San Luis': ['San Luis','Villa Mercedes','Otra'],
+  'Santa Cruz': ['Río Gallegos','Caleta Olivia','Otra'],
+  'Santa Fe': ['Santa Fe','Rosario','Rafaela','Reconquista','Venado Tuerto','Otra'],
+  'Santiago del Estero': ['Santiago del Estero','La Banda','Otra'],
+  'Tierra del Fuego': ['Ushuaia','Río Grande','Otra'],
+  'Tucumán': ['San Miguel de Tucumán','Concepción','Banda del Río Salí','Otra'],
+};

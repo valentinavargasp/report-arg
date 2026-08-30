@@ -1,26 +1,25 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Sidebar    from "@/components/admin/Sidebar";
-import Navbar     from "@/components/admin/Navbar";
+import Sidebar from "@/components/admin/Sidebar";
+import Navbar from "@/components/admin/Navbar";
 import Breadcrumb from "@/components/admin/Breadcrumb";
 import { MapPin, Clock, Tag, ChevronLeft, ChevronRight, User } from "lucide-react";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+import apiClient from "@/services/apiClient";
 
 const ESTADOS = [
-  { key: "",           label: "Todos"       },
-  { key: "recibido",   label: "Recibido"    },
-  { key: "en_proceso", label: "En proceso"  },
-  { key: "resuelto",   label: "Resuelto"    },
-  { key: "rechazado",  label: "Rechazado"   },
+  { key: "", label: "Todos" },
+  { key: "recibido", label: "Recibido" },
+  { key: "en_proceso", label: "En proceso" },
+  { key: "resuelto", label: "Resuelto" },
+  { key: "rechazado", label: "Rechazado" },
 ];
 
 const ESTADO_LABELS = {
-  recibido:   "Recibido",
+  recibido: "Recibido",
   en_proceso: "En proceso",
-  resuelto:   "Resuelto",
-  rechazado:  "Rechazado",
+  resuelto: "Resuelto",
+  rechazado: "Rechazado",
 };
 
 function estadoClass(estado) {
@@ -29,38 +28,38 @@ function estadoClass(estado) {
 
 function tiempoRelativo(fecha) {
   const diff = Date.now() - new Date(fecha).getTime();
-  const min  = Math.floor(diff / 60000);
-  const hs   = Math.floor(diff / 3600000);
+  const min = Math.floor(diff / 60000);
+  const hs = Math.floor(diff / 3600000);
   const dias = Math.floor(diff / 86400000);
   if (min < 60) return `Hace ${min} min`;
-  if (hs  < 24) return `Hace ${hs}h`;
+  if (hs < 24) return `Hace ${hs}h`;
   return `Hace ${dias} día${dias > 1 ? "s" : ""}`;
 }
 
 export default function AdminReclamosPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [reclamos,    setReclamos]    = useState([]);
-  const [loading,     setLoading]     = useState(true);
-  const [total,       setTotal]       = useState(0);
-  const [totalPag,    setTotalPag]    = useState(1);
-  const [pagina,      setPagina]      = useState(1);
+  const [reclamos, setReclamos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
+  const [totalPag, setTotalPag] = useState(1);
+  const [pagina, setPagina] = useState(1);
   const [filtroEstado, setFiltroEstado] = useState("");
-  const [detalle,     setDetalle]     = useState(null);
-  const [updatingId,  setUpdatingId]  = useState(null);
+  const [detalle, setDetalle] = useState(null);
+  const [updatingId, setUpdatingId] = useState(null);
 
   const fetchReclamos = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({ pagina, limite: 15 });
       if (filtroEstado) params.set("estado", filtroEstado);
-      const res  = await fetch(`${API_URL}/api/admin/reclamos/lista?${params}`);
-      const data = await res.json();
+      const res = await apiClient.get(`/admin/reclamos/lista?${params}`);
+      const data = res.data;
       if (data.ok) {
         setReclamos(data.data);
         setTotal(data.total);
         setTotalPag(data.totalPaginas);
       }
-    } catch {}
+    } catch { }
     finally { setLoading(false); }
   }, [pagina, filtroEstado]);
 
@@ -68,26 +67,22 @@ export default function AdminReclamosPage() {
 
   async function cargarDetalle(id) {
     try {
-      const res  = await fetch(`${API_URL}/api/admin/reclamos/${id}`);
-      const data = await res.json();
+      const res = await apiClient.get(`/admin/reclamos/${id}`);
+      const data = res.data;
       if (data.ok) setDetalle(data.data);
-    } catch {}
+    } catch { }
   }
 
   async function cambiarEstado(id, estado) {
     setUpdatingId(id);
     try {
-      const res  = await fetch(`${API_URL}/api/admin/reclamos/${id}/estado`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ estado }),
-      });
-      const data = await res.json();
+      const res = await apiClient.patch(`/admin/reclamos/${id}/estado`, { estado });
+      const data = res.data;
       if (data.ok) {
         setReclamos(prev => prev.map(r => r.id === id ? { ...r, estado } : r));
         if (detalle?.id === id) setDetalle(prev => ({ ...prev, estado }));
       }
-    } catch {}
+    } catch { }
     finally { setUpdatingId(null); }
   }
 
@@ -136,9 +131,11 @@ export default function AdminReclamosPage() {
                     <thead>
                       <tr style={{ background: "var(--color-bg)" }}>
                         {["ID", "Título", "Categoría", "Autor", "Fecha", "Estado", ""].map(h => (
-                          <th key={h} style={{ padding: "10px 14px", textAlign: "left", fontSize: 11,
+                          <th key={h} style={{
+                            padding: "10px 14px", textAlign: "left", fontSize: 11,
                             color: "var(--color-muted)", fontWeight: 600, letterSpacing: 0.5,
-                            borderBottom: "1px solid var(--color-border)", whiteSpace: "nowrap" }}>
+                            borderBottom: "1px solid var(--color-border)", whiteSpace: "nowrap"
+                          }}>
                             {h}
                           </th>
                         ))}
@@ -155,8 +152,10 @@ export default function AdminReclamosPage() {
                             <td style={{ padding: "10px 14px", color: "var(--color-muted)", fontWeight: 600, whiteSpace: "nowrap" }}>
                               #{String(r.id).padStart(4, "0")}
                             </td>
-                            <td style={{ padding: "10px 14px", maxWidth: 200, overflow: "hidden",
-                              textOverflow: "ellipsis", whiteSpace: "nowrap", color: "#333" }}>
+                            <td style={{
+                              padding: "10px 14px", maxWidth: 200, overflow: "hidden",
+                              textOverflow: "ellipsis", whiteSpace: "nowrap", color: "#333"
+                            }}>
                               {r.titulo}
                             </td>
                             <td style={{ padding: "10px 14px", color: "var(--color-muted)", whiteSpace: "nowrap" }}>
@@ -202,7 +201,7 @@ export default function AdminReclamosPage() {
                         <p className="ar-mc-title">{r.titulo}</p>
                         <div className="ar-mc-meta">
                           {r.categoriaNombre && <span><Tag size={11} /> {r.categoriaNombre}</span>}
-                          {r.autorNombre     && <span><User size={11} /> {r.autorNombre}</span>}
+                          {r.autorNombre && <span><User size={11} /> {r.autorNombre}</span>}
                           <span><Clock size={11} /> {tiempoRelativo(r.fecha_creacion)}</span>
                         </div>
                       </div>
@@ -212,8 +211,10 @@ export default function AdminReclamosPage() {
               )}
 
               {!loading && totalPag > 1 && (
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end",
-                  gap: 10, padding: "12px 16px", borderTop: "1px solid var(--color-border)" }}>
+                <div style={{
+                  display: "flex", alignItems: "center", justifyContent: "flex-end",
+                  gap: 10, padding: "12px 16px", borderTop: "1px solid var(--color-border)"
+                }}>
                   <button onClick={() => setPagina(p => Math.max(p - 1, 1))} disabled={pagina === 1}
                     className="ar-page-btn" style={{ opacity: pagina === 1 ? 0.4 : 1 }}>
                     <ChevronLeft size={14} />
@@ -234,8 +235,10 @@ export default function AdminReclamosPage() {
                     DETALLE #{String(detalle.id).padStart(4, "0")}
                   </span>
                   <button onClick={() => setDetalle(null)}
-                    style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-muted)",
-                      fontSize: 18, lineHeight: 1, padding: "2px 6px" }}>
+                    style={{
+                      background: "none", border: "none", cursor: "pointer", color: "var(--color-muted)",
+                      fontSize: 18, lineHeight: 1, padding: "2px 6px"
+                    }}>
                     ✕
                   </button>
                 </div>

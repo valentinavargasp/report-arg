@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+import apiClient from "@/services/apiClient";
 
 const MapaReclamos = dynamic(
   () => import("@/components/home/MapaReclamos"),
@@ -17,13 +16,13 @@ export default function TrendingSidebar() {
   const [reclamos,   setReclamos]   = useState([]);
 
   useEffect(() => {
-    fetch(`${API_URL}/api/feed/tendencias`)
-      .then(r => r.json())
+    apiClient.get(`/feed/tendencias`)
+      .then(r => r.data)
       .then(d => { if (d.ok) setTendencias(d.data); })
       .catch(() => {});
 
-    fetch(`${API_URL}/api/reclamos/mapa`)
-      .then(r => r.json())
+    apiClient.get(`/reclamos/mapa`)
+      .then(r => r.data)
       .then(d => { if (d.ok) setReclamos(d.data.slice(0, 50)); })
       .catch(() => {});
   }, []);

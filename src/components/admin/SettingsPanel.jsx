@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useRef, useEffect} from "react";
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import { useState, useRef, useEffect } from "react";
 
 const estadosIniciales = [
-  { nombre: "Abierto",    desc: "Estado inicial al crear un reporte",     color: "#378ADD", bg: "#E6F1FB", text: "#0C447C", tipo: "Inicial"    },
-  { nombre: "En proceso", desc: "Asignado a un área responsable",         color: "#EF9F27", bg: "#FAEEDA", text: "#633806", tipo: "Intermedio" },
-  { nombre: "Resuelto",   desc: "Incidencia resuelta y cerrada",          color: "#639922", bg: "#EAF3DE", text: "#27500A", tipo: "Final"      },
-  { nombre: "Rechazado",  desc: "Reporte inválido o duplicado",           color: "#888780", bg: "#F1EFE8", text: "#444441", tipo: "Final"      },
+  { nombre: "Abierto", desc: "Estado inicial al crear un reporte", color: "#378ADD", bg: "#E6F1FB", text: "#0C447C", tipo: "Inicial" },
+  { nombre: "En proceso", desc: "Asignado a un área responsable", color: "#EF9F27", bg: "#FAEEDA", text: "#633806", tipo: "Intermedio" },
+  { nombre: "Resuelto", desc: "Incidencia resuelta y cerrada", color: "#639922", bg: "#EAF3DE", text: "#27500A", tipo: "Final" },
+  { nombre: "Rechazado", desc: "Reporte inválido o duplicado", color: "#888780", bg: "#F1EFE8", text: "#444441", tipo: "Final" },
 ];
 
 const zonasHorarias = [
@@ -39,11 +38,11 @@ export default function SettingsPanel() {
 
   // Notificaciones
   const [notifs, setNotifs] = useState({
-    emailCrear:      true,
-    emailEstado:     true,
-    resumenDiario:   false,
+    emailCrear: true,
+    emailEstado: true,
+    resumenDiario: false,
     alertasUrgentes: true,
-    push:            false,
+    push: false,
   });
   const [notifsCambios, setNotifsCambios] = useState(false);
   const [notifsGuardadoOk, setNotifsGuardadoOk] = useState(false);
@@ -108,10 +107,10 @@ export default function SettingsPanel() {
   };
 
   // Determinar cambios y handlers del tab activo
-  const hayCambios   = [generalCambios, false, notifsCambios][tabActivo];
-  const guardadoOk   = [generalGuardadoOk, false, notifsGuardadoOk][tabActivo];
-  const onGuardar    = [guardarGeneral, null, guardarNotifs][tabActivo];
-  const onDescartar  = [descartarGeneral, null, descartarNotifs][tabActivo];
+  const hayCambios = [generalCambios, false, notifsCambios][tabActivo];
+  const guardadoOk = [generalGuardadoOk, false, notifsGuardadoOk][tabActivo];
+  const onGuardar = [guardarGeneral, null, guardarNotifs][tabActivo];
+  const onDescartar = [descartarGeneral, null, descartarNotifs][tabActivo];
 
   return (
     <div className="card" style={{ padding: 0, overflow: "hidden" }}>
@@ -233,11 +232,11 @@ export default function SettingsPanel() {
               Controlá qué eventos generan notificaciones en el sistema.
             </p>
             {[
-              { key: "emailCrear",      label: "Email al crear reporte",      desc: "Notificar al ciudadano cuando su reporte es registrado" },
-              { key: "emailEstado",     label: "Email al cambiar estado",     desc: "Notificar al ciudadano ante cada cambio de estado" },
-              { key: "resumenDiario",   label: "Resumen diario al admin",     desc: "Enviar resumen de actividad cada día a las 8:00 AM" },
-              { key: "alertasUrgentes", label: "Alertas de reportes urgentes",desc: "Notificar si se reciben 10+ reportes en 1 hora" },
-              { key: "push",            label: "Notificaciones push",         desc: "Activar notificaciones push en el panel administrativo" },
+              { key: "emailCrear", label: "Email al crear reporte", desc: "Notificar al ciudadano cuando su reporte es registrado" },
+              { key: "emailEstado", label: "Email al cambiar estado", desc: "Notificar al ciudadano ante cada cambio de estado" },
+              { key: "resumenDiario", label: "Resumen diario al admin", desc: "Enviar resumen de actividad cada día a las 8:00 AM" },
+              { key: "alertasUrgentes", label: "Alertas de reportes urgentes", desc: "Notificar si se reciben 10+ reportes en 1 hora" },
+              { key: "push", label: "Notificaciones push", desc: "Activar notificaciones push en el panel administrativo" },
             ].map((n, i, arr) => (
               <div key={n.key} style={{
                 display: "flex", alignItems: "center", justifyContent: "space-between",

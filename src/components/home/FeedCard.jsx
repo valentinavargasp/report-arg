@@ -6,8 +6,8 @@ import {
   CheckCircle, MapPin, MessageCircle, Share2, Send, Trash2,
   ChevronDown, ChevronUp,
 } from "lucide-react";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+import apiClient from "@/services/apiClient";
+import Image from "next/image";
 
 const ESTADO_LABELS = {
   recibido:   { label: "Recibido",   cls: "pendiente"  },
@@ -94,8 +94,8 @@ function ComentariosSection({ idReclamo, onNuevoComentario }) {
     async function cargar() {
       setCargando(true);
       try {
-        const res  = await fetch(`${API_URL}/api/comentarios/${idReclamo}`);
-        const data = await res.json();
+        const res  = await apiClient.get(`/comentarios/${idReclamo}`);
+        const data = res.data;
         if (data.ok) setComentarios(data.data);
       } catch {
         // sin conexión: no mostramos error, la lista queda vacía
@@ -118,16 +118,12 @@ function ComentariosSection({ idReclamo, onNuevoComentario }) {
     setError("");
     setEnviando(true);
     try {
-      const res  = await fetch(`${API_URL}/api/comentarios`, {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({
+      const res  = await apiClient.post(`/comentarios`, {
           id_reclamo: idReclamo,
           id_usuario: session.user.id,
           texto:      texto.trim(),
-        }),
       });
-      const data = await res.json();
+      const data = res.data;
       if (data.ok) {
         setComentarios(prev => [
           ...prev,
@@ -154,12 +150,10 @@ function ComentariosSection({ idReclamo, onNuevoComentario }) {
   async function eliminarComentario() {
     setEliminandoCom(true);
     try {
-      const res  = await fetch(`${API_URL}/api/comentarios/${confirmComentario.id}`, {
-        method:  "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ id_usuario: session.user.id }),
+      const res  = await apiClient.delete(`/comentarios/${confirmComentario.id}`, {
+        data: { id_usuario: session.user.id }
       });
-      const data = await res.json();
+      const data = res.data;
       if (data.ok) setComentarios(prev => prev.filter(x => x.id !== confirmComentario.id));
     } finally {
       setEliminandoCom(false);
@@ -178,9 +172,9 @@ function ComentariosSection({ idReclamo, onNuevoComentario }) {
       <ul className="fc-comments-list">
         {comentarios.map(c => (
           <li key={c.id} className="fc-comment-item">
-            <div className="fc-comment-avatar">
+            <div className="fc-comment-avatar" style={{ position: "relative" }}>
               {c.autorFoto
-                ? <img src={c.autorFoto} alt={c.autorNombre} />
+                ? <Image src={c.autorFoto} alt={c.autorNombre} fill unoptimized style={{ objectFit: "cover" }} />
                 : iniciales(c.autorNombre)}
             </div>
             <div className="fc-comment-body">
@@ -203,9 +197,9 @@ function ComentariosSection({ idReclamo, onNuevoComentario }) {
 
       {session?.user ? (
         <form className="fc-comment-form" onSubmit={enviarComentario}>
-          <div className="fc-comment-avatar small">
+          <div className="fc-comment-avatar small" style={{ position: "relative" }}>
             {session.user.foto
-              ? <img src={session.user.foto} alt="" />
+              ? <Image src={session.user.foto} alt="" fill unoptimized style={{ objectFit: "cover" }} />
               : iniciales(session.user.name || session.user.email)}
           </div>
           <input
@@ -258,12 +252,10 @@ function ComunicadoCard({ item, onEliminado }) {
   async function eliminarComunicado() {
     setEliminando(true);
     try {
-      const res  = await fetch(`${API_URL}/api/reclamos/comunicado/${item.id}`, {
-        method:  "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ id_usuario: session.user.id }),
+      const res  = await apiClient.delete(`/reclamos/comunicado/${item.id}`, {
+        data: { id_usuario: session.user.id }
       });
-      const data = await res.json();
+      const data = res.data;
       if (data.ok) onEliminado?.(item.id);
     } finally {
       setEliminando(false);
@@ -336,12 +328,14 @@ function ComunicadoCard({ item, onEliminado }) {
         )}
 
         {item.imagen && (
-          <div className="feed-card-img-wrap">
-            <img
+          <div className="feed-card-img-wrap" style={{ position: "relative" }}>
+            <Image
               className="feed-card-img"
               src={item.imagen}
               alt={item.titulo}
-              loading="lazy"
+              fill
+              unoptimized
+              style={{ objectFit: "cover" }}
             />
           </div>
         )}
@@ -387,9 +381,9 @@ export default function FeedCard({ item, onEliminado }) {
     <article className="feed-card">
       <div className="feed-card-header">
         <div className="feed-card-author">
-          <div className="feed-card-avatar">
+          <div className="feed-card-avatar" style={{ position: "relative" }}>
             {item.autorFoto
-              ? <img src={item.autorFoto} alt={item.autorNombre} />
+              ? <Image src={item.autorFoto} alt={item.autorNombre} fill unoptimized style={{ objectFit: "cover" }} />
               : iniciales(item.autorNombre)}
           </div>
           <div>

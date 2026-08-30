@@ -5,8 +5,8 @@ import { useRouter, useParams } from "next/navigation";
 import Sidebar from "@/components/admin/Sidebar";
 import Navbar from "@/components/admin/Navbar";
 import Breadcrumb from "@/components/admin/Breadcrumb";
+import apiClient from "@/services/apiClient";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export default function EditarCategoriaPage() {
   const router = useRouter();
@@ -29,8 +29,8 @@ export default function EditarCategoriaPage() {
   useEffect(() => {
     async function fetchCategoria() {
       try {
-        const res = await fetch(`${API_URL}/api/admin/categorias/${id}`);
-        const data = await res.json();
+        const res = await apiClient.get(`/admin/categorias/${id}`);
+        const data = res.data;
         if (data.ok) setForm(data.data);
       } catch {
         setError("Error al cargar la categoría");
@@ -58,18 +58,14 @@ export default function EditarCategoriaPage() {
 
     setSaving(true);
     try {
-      const res = await fetch(`${API_URL}/api/admin/categorias/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nombre: form.nombre.trim(),
-          descripcion: form.descripcion?.trim() || null,
-          tipo: form.tipo,
-          estado: form.estado,
-          orden: Number(form.orden),
-        }),
+      const res = await apiClient.put(`/admin/categorias/${id}`, {
+        nombre: form.nombre.trim(),
+        descripcion: form.descripcion?.trim() || null,
+        tipo: form.tipo,
+        estado: form.estado,
+        orden: Number(form.orden),
       });
-      const data = await res.json();
+      const data = res.data;
       if (!data.ok) return setError(data.mensaje);
       setSuccess("La categoría se ha actualizado correctamente.");
       setTimeout(() => router.push("/admin/categories"), 1500);

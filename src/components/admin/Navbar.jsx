@@ -4,8 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Bell, HelpCircle, Menu, User, LogOut, ChevronDown, Home } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import apiClient from "@/services/apiClient";
 
 function FaqItem({ item, last }) {
   const [abierto, setAbierto] = useState(false);
@@ -35,8 +34,8 @@ export default function Navbar({ section = "Dashboard", onMenuClick }) {
   const { data: session } = useSession();
 
   // Notificaciones
-  const [notifOpen,     setNotifOpen]     = useState(false);
-  const [notifs,        setNotifs]        = useState([]);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifs, setNotifs] = useState([]);
   const [loadingNotifs, setLoadingNotifs] = useState(false);
   const notifRef = useRef(null);
   const noLeidas = notifs.filter(n => !n.leida).length;
@@ -46,8 +45,8 @@ export default function Navbar({ section = "Dashboard", onMenuClick }) {
   const helpRef = useRef(null);
 
   // Perfil usuario
-  const [profileOpen, setProfileOpen]   = useState(false);
-  const [perfil,      setPerfil]        = useState(null);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [perfil, setPerfil] = useState(null);
   const profileRef = useRef(null);
 
   // Cargar notificaciones al abrir panel
@@ -58,18 +57,17 @@ export default function Navbar({ section = "Dashboard", onMenuClick }) {
   // Cargar perfil cuando hay sesión
   useEffect(() => {
     if (!session?.user?.id) return;
-    fetch(`${API_URL}/api/admin/usuarios/${session.user.id}`)
-      .then(r => r.json())
-      .then(d => { if (d.ok) setPerfil(d.data); })
-      .catch(() => {});
+    apiClient.get(`/admin/usuarios/${session.user.id}`)
+      .then(r => { if (r.data?.ok) setPerfil(r.data?.data); })
+      .catch(() => { });
   }, [session?.user?.id]);
 
   // Cerrar paneles al click afuera
   useEffect(() => {
     function handleClick(e) {
-      if (notifRef.current   && !notifRef.current.contains(e.target))    setNotifOpen(false);
-      if (helpRef.current    && !helpRef.current.contains(e.target))     setHelpOpen(false);
-      if (profileRef.current && !profileRef.current.contains(e.target))  setProfileOpen(false);
+      if (notifRef.current && !notifRef.current.contains(e.target)) setNotifOpen(false);
+      if (helpRef.current && !helpRef.current.contains(e.target)) setHelpOpen(false);
+      if (profileRef.current && !profileRef.current.contains(e.target)) setProfileOpen(false);
     }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
@@ -78,8 +76,8 @@ export default function Navbar({ section = "Dashboard", onMenuClick }) {
   async function fetchNotifs() {
     setLoadingNotifs(true);
     try {
-      const res  = await fetch(`${API_URL}/api/admin/notificaciones`);
-      const data = await res.json();
+      const res = await apiClient.get(`/admin/notificaciones`);
+      const data = res.data;
       if (data.ok) setNotifs(data.data);
     } catch (err) {
       console.error('Error notificaciones:', err);
@@ -90,7 +88,7 @@ export default function Navbar({ section = "Dashboard", onMenuClick }) {
 
   async function marcarLeida(id) {
     try {
-      await fetch(`${API_URL}/api/admin/notificaciones/${id}/leer`, { method: 'PUT' });
+      await apiClient.put(`/admin/notificaciones/${id}/leer`);
       setNotifs(prev => prev.map(n => n.id === id ? { ...n, leida: true } : n));
     } catch (err) {
       console.error('Error marcar leída:', err);
@@ -99,7 +97,7 @@ export default function Navbar({ section = "Dashboard", onMenuClick }) {
 
   async function marcarTodasLeidas() {
     try {
-      await fetch(`${API_URL}/api/admin/notificaciones/leer-todas`, { method: 'PUT' });
+      await apiClient.put(`/admin/notificaciones/leer-todas`);
       setNotifs(prev => prev.map(n => ({ ...n, leida: true })));
     } catch (err) {
       console.error('Error marcar todas leídas:', err);
@@ -216,11 +214,11 @@ export default function Navbar({ section = "Dashboard", onMenuClick }) {
               </div>
               <div style={{ padding: "8px 0" }}>
                 {[
-                  { pregunta: "¿Cómo creo un nuevo usuario?",         resp: "Ir a Usuarios › + Crear Usuario y completar el formulario." },
+                  { pregunta: "¿Cómo creo un nuevo usuario?", resp: "Ir a Usuarios › + Crear Usuario y completar el formulario." },
                   { pregunta: "¿Cómo cambio los permisos de un rol?", resp: "Ir a Roles y Permisos, seleccionar el rol y modificar la matriz de permisos." },
-                  { pregunta: "¿Cómo resuelvo un reporte?",           resp: "Desde el Dashboard, hacer click en el reporte y cambiar su estado a Resuelto." },
-                  { pregunta: "¿Cómo configuro notificaciones?",      resp: "Ir a Configuración › Notificaciones y activar las que necesitás." },
-                  { pregunta: "¿Cómo cambio el logo del sistema?",    resp: "Ir a Configuración › Parámetros generales y subir una nueva imagen." },
+                  { pregunta: "¿Cómo resuelvo un reporte?", resp: "Desde el Dashboard, hacer click en el reporte y cambiar su estado a Resuelto." },
+                  { pregunta: "¿Cómo configuro notificaciones?", resp: "Ir a Configuración › Notificaciones y activar las que necesitás." },
+                  { pregunta: "¿Cómo cambio el logo del sistema?", resp: "Ir a Configuración › Parámetros generales y subir una nueva imagen." },
                 ].map((item, i, arr) => (
                   <FaqItem key={i} item={item} last={i === arr.length - 1} />
                 ))}
@@ -257,9 +255,9 @@ export default function Navbar({ section = "Dashboard", onMenuClick }) {
               <p className="navbar-user-role">
                 {(() => {
                   const rol = perfil?.rol || session?.user?.role;
-                  if (rol === "admin")       return "Administrador";
+                  if (rol === "admin") return "Administrador";
                   if (rol === "institucion") return "Institución";
-                  if (rol === "ciudadano")   return "Ciudadano";
+                  if (rol === "ciudadano") return "Ciudadano";
                   return rol ?? "—";
                 })()}
               </p>

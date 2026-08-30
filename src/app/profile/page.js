@@ -4,54 +4,55 @@ import "@/styles/admin-dash.css";
 import { useState, useEffect, useRef } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Camera, User, Mail, MapPin, Lock, LogOut, Save, X, Eye, EyeOff, ArrowLeft } from "lucide-react";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+import apiClient from "@/services/apiClient";
+import { uploadImage } from "@/services/uploadService";
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
-  const router  = useRouter();
+  const router = useRouter();
   const fileRef = useRef(null);
 
-  const [perfil,    setPerfil]    = useState(null);
-  const [loading,   setLoading]   = useState(true);
-  const [saving,    setSaving]    = useState(false);
-  const [preview,   setPreview]   = useState(null);
+  const [perfil, setPerfil] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [preview, setPreview] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [form,      setForm]      = useState({ nombre: "", apellido: "", email: "", provincia: "", ciudad: "", zona: "", foto: null });
-  const [msg,       setMsg]       = useState({ type: "", text: "" });
+  const [form, setForm] = useState({ nombre: "", apellido: "", email: "", provincia: "", ciudad: "", zona: "", foto: null });
+  const [msg, setMsg] = useState({ type: "", text: "" });
 
-  const [pwdModal,  setPwdModal]  = useState(false);
-  const [pwd,       setPwd]       = useState({ actual: "", nueva: "", confirmar: "" });
-  const [pwdVis,    setPwdVis]    = useState({ actual: false, nueva: false, confirmar: false });
+  const [pwdModal, setPwdModal] = useState(false);
+  const [pwd, setPwd] = useState({ actual: "", nueva: "", confirmar: "" });
+  const [pwdVis, setPwdVis] = useState({ actual: false, nueva: false, confirmar: false });
   const [pwdSaving, setPwdSaving] = useState(false);
-  const [pwdMsg,    setPwdMsg]    = useState({ type: "", text: "" });
+  const [pwdMsg, setPwdMsg] = useState({ type: "", text: "" });
 
   useEffect(() => {
     if (status === "loading") return;
     if (!session?.user?.id) { router.push("/login"); return; }
 
-    fetch(`${API_URL}/api/admin/usuarios/${session.user.id}`)
-      .then(r => r.json())
+    apiClient.get(`/admin/usuarios/${session.user.id}`)
+      .then(r => r.data)
       .then(d => {
         if (d.ok) {
           const u = d.data;
           setPerfil(u);
           setPreview(u.foto || null);
           setForm({
-            nombre:    u.nombre_ciudadano || u.nombre?.split(" ")[0] || "",
-            apellido:  u.apellido || u.nombre?.split(" ").slice(1).join(" ") || "",
-            email:     u.email || "",
+            nombre: u.nombre_ciudadano || u.nombre?.split(" ")[0] || "",
+            apellido: u.apellido || u.nombre?.split(" ").slice(1).join(" ") || "",
+            email: u.email || "",
             provincia: u.provincia || "",
-            ciudad:    u.ciudad || "",
-            zona:      u.zona || "",
-            foto:      u.foto || null,
+            ciudad: u.ciudad || "",
+            zona: u.zona || "",
+            foto: u.foto || null,
           });
         }
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false));
-  }, [session, status]);
+  }, [session, status, router]);
 
   async function handleFoto(e) {
     const file = e.target.files?.[0];
@@ -60,11 +61,8 @@ export default function ProfilePage() {
     setUploading(true);
     setMsg({ type: "", text: "" });
     try {
-      const fd = new FormData();
-      fd.append("foto", file);
-      const res  = await fetch(`${API_URL}/api/admin/upload/foto`, { method: "POST", body: fd });
-      const data = await res.json();
-      if (res.ok && data.ok) {
+      const data = await uploadImage(file);
+      if (data.ok) {
         setForm(prev => ({ ...prev, foto: data.url }));
       } else {
         setMsg({ type: "error", text: data.mensaje || "Error al subir la imagen" });
@@ -81,12 +79,8 @@ export default function ProfilePage() {
     setSaving(true);
     setMsg({ type: "", text: "" });
     try {
-      const res  = await fetch(`${API_URL}/api/admin/usuarios/${session.user.id}/perfil`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      const data = await res.json();
+      const res = await apiClient.patch(`/admin/usuarios/${session.user.id}/perfil`, form);
+      const data = res.data;
       if (data.ok) {
         setMsg({ type: "ok", text: "Perfil actualizado correctamente" });
         setPerfil(prev => ({ ...prev, nombre: `${form.nombre} ${form.apellido}`.trim(), email: form.email, foto: form.foto }));
@@ -103,13 +97,13 @@ export default function ProfilePage() {
   function handleCancelar() {
     if (!perfil) return;
     setForm({
-      nombre:    perfil.nombre_ciudadano || perfil.nombre?.split(" ")[0] || "",
-      apellido:  perfil.apellido || perfil.nombre?.split(" ").slice(1).join(" ") || "",
-      email:     perfil.email || "",
+      nombre: perfil.nombre_ciudadano || perfil.nombre?.split(" ")[0] || "",
+      apellido: perfil.apellido || perfil.nombre?.split(" ").slice(1).join(" ") || "",
+      email: perfil.email || "",
       provincia: perfil.provincia || "",
-      ciudad:    perfil.ciudad || "",
-      zona:      perfil.zona || "",
-      foto:      perfil.foto || null,
+      ciudad: perfil.ciudad || "",
+      zona: perfil.zona || "",
+      foto: perfil.foto || null,
     });
     setPreview(perfil.foto || null);
     setMsg({ type: "", text: "" });
@@ -124,12 +118,8 @@ export default function ProfilePage() {
       return setPwdMsg({ type: "error", text: "La nueva contraseña debe tener al menos 8 caracteres" });
     setPwdSaving(true);
     try {
-      const res  = await fetch(`${API_URL}/api/admin/usuarios/${session.user.id}/cambiar-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ passwordActual: pwd.actual, passwordNueva: pwd.nueva }),
-      });
-      const data = await res.json();
+      const res = await apiClient.post(`/admin/usuarios/${session.user.id}/cambiar-password`, { passwordActual: pwd.actual, passwordNueva: pwd.nueva });
+      const data = res.data;
       if (data.ok) {
         setPwdMsg({ type: "ok", text: "Contraseña actualizada correctamente" });
         setPwd({ actual: "", nueva: "", confirmar: "" });
@@ -144,7 +134,7 @@ export default function ProfilePage() {
     }
   }
 
-  const iniciales   = (`${form.nombre} ${form.apellido}`.trim() || "?").split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase();
+  const iniciales = (`${form.nombre} ${form.apellido}`.trim() || "?").split(" ").map(n => n[0]).slice(0, 2).join("").toUpperCase();
   const idFormateado = perfil ? `ARG-${String(perfil.id).padStart(5, "0")}` : "—";
 
   if (loading) return (
@@ -177,18 +167,22 @@ export default function ProfilePage() {
               <div className="profile-avatar-col">
                 <div style={{ position: "relative" }}>
                   {preview ? (
-                    <img src={preview} alt="avatar"
-                      style={{ width: 110, height: 110, borderRadius: "50%", objectFit: "cover", border: "3px solid #c7d2fe" }} />
+                    <Image src={preview} alt="avatar" width={110} height={110} unoptimized
+                      style={{ borderRadius: "50%", objectFit: "cover", border: "3px solid #c7d2fe" }} />
                   ) : (
-                    <div style={{ width: 110, height: 110, borderRadius: "50%", background: "#2D3A8C", color: "#fff",
-                      display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, fontWeight: "bold" }}>
+                    <div style={{
+                      width: 110, height: 110, borderRadius: "50%", background: "#2D3A8C", color: "#fff",
+                      display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, fontWeight: "bold"
+                    }}>
                       {iniciales}
                     </div>
                   )}
                   <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading}
-                    style={{ position: "absolute", bottom: 4, right: 4, width: 30, height: 30, borderRadius: "50%",
+                    style={{
+                      position: "absolute", bottom: 4, right: 4, width: 30, height: 30, borderRadius: "50%",
                       background: "#2D3A8C", border: "2px solid #fff", display: "flex", alignItems: "center",
-                      justifyContent: "center", cursor: "pointer", boxShadow: "0 2px 6px rgba(0,0,0,0.2)" }}>
+                      justifyContent: "center", cursor: "pointer", boxShadow: "0 2px 6px rgba(0,0,0,0.2)"
+                    }}>
                     <Camera size={14} color="#fff" />
                   </button>
                   <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleFoto} />
@@ -209,36 +203,42 @@ export default function ProfilePage() {
               {/* Formulario */}
               <div className="profile-form-col">
                 <div className="profile-form-grid">
-                  <FormField label="NOMBRE"      icon={<User size={14} />}   value={form.nombre}    onChange={v => setForm(p => ({ ...p, nombre: v }))} />
-                  <FormField label="APELLIDO"    icon={<User size={14} />}   value={form.apellido}  onChange={v => setForm(p => ({ ...p, apellido: v }))} />
-                  <FormField label="EMAIL"       icon={<Mail size={14} />}   value={form.email}     onChange={v => setForm(p => ({ ...p, email: v }))} type="email" />
-                  <FormField label="PROVINCIA"   icon={<MapPin size={14} />} value={form.provincia} onChange={v => setForm(p => ({ ...p, provincia: v }))} />
-                  <FormField label="CIUDAD"      icon={<MapPin size={14} />} value={form.ciudad}    onChange={v => setForm(p => ({ ...p, ciudad: v }))} />
-                  <FormField label="ZONA / BARRIO" icon={<MapPin size={14} />} value={form.zona}   onChange={v => setForm(p => ({ ...p, zona: v }))} />
+                  <FormField label="NOMBRE" icon={<User size={14} />} value={form.nombre} onChange={v => setForm(p => ({ ...p, nombre: v }))} />
+                  <FormField label="APELLIDO" icon={<User size={14} />} value={form.apellido} onChange={v => setForm(p => ({ ...p, apellido: v }))} />
+                  <FormField label="EMAIL" icon={<Mail size={14} />} value={form.email} onChange={v => setForm(p => ({ ...p, email: v }))} type="email" />
+                  <FormField label="PROVINCIA" icon={<MapPin size={14} />} value={form.provincia} onChange={v => setForm(p => ({ ...p, provincia: v }))} />
+                  <FormField label="CIUDAD" icon={<MapPin size={14} />} value={form.ciudad} onChange={v => setForm(p => ({ ...p, ciudad: v }))} />
+                  <FormField label="ZONA / BARRIO" icon={<MapPin size={14} />} value={form.zona} onChange={v => setForm(p => ({ ...p, zona: v }))} />
                 </div>
               </div>
             </div>
 
             {msg.text && (
-              <div style={{ marginTop: 16, padding: "10px 14px", borderRadius: 8, fontSize: 13,
+              <div style={{
+                marginTop: 16, padding: "10px 14px", borderRadius: 8, fontSize: 13,
                 background: msg.type === "ok" ? "#e6f4ea" : "#fee2e2",
                 color: msg.type === "ok" ? "#1A7A3C" : "#ef4444",
-                border: `1px solid ${msg.type === "ok" ? "#bbf7d0" : "#fecaca"}` }}>
+                border: `1px solid ${msg.type === "ok" ? "#bbf7d0" : "#fecaca"}`
+              }}>
                 {msg.text}
               </div>
             )}
 
             <div className="profile-form-actions">
               <button type="button" onClick={handleCancelar}
-                style={{ padding: "9px 22px", borderRadius: 8, border: "1px solid #e5e9f5",
-                  background: "#fff", fontSize: 13, cursor: "pointer", color: "#1a1a2e" }}>
+                style={{
+                  padding: "9px 22px", borderRadius: 8, border: "1px solid #e5e9f5",
+                  background: "#fff", fontSize: 13, cursor: "pointer", color: "#1a1a2e"
+                }}>
                 Cancelar
               </button>
               <button type="submit" disabled={saving}
-                style={{ padding: "9px 22px", borderRadius: 8, border: "none",
+                style={{
+                  padding: "9px 22px", borderRadius: 8, border: "none",
                   background: saving ? "#aaa" : "#2D3A8C", color: "#fff",
                   fontSize: 13, fontWeight: 600, cursor: saving ? "not-allowed" : "pointer",
-                  display: "flex", alignItems: "center", gap: 6 }}>
+                  display: "flex", alignItems: "center", gap: 6
+                }}>
                 <Save size={14} /> {saving ? "Guardando..." : "Guardar cambios"}
               </button>
             </div>
@@ -249,8 +249,10 @@ export default function ProfilePage() {
         <div className="profile-cards-row">
           <div style={{ background: "#fff", border: "1px solid #e5e9f5", borderRadius: 12, padding: "20px 24px" }}
             className="profile-action-card">
-            <div style={{ width: 40, height: 40, borderRadius: 10, background: "#f0f4ff",
-              display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: 10, background: "#f0f4ff",
+              display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0
+            }}>
               <Lock size={18} style={{ color: "#2D3A8C" }} />
             </div>
             <div style={{ flex: 1 }}>
@@ -258,17 +260,21 @@ export default function ProfilePage() {
               <p style={{ margin: 0, fontSize: 12, color: "#888" }}>Cambiá tu contraseña periódicamente.</p>
             </div>
             <button onClick={() => { setPwdModal(true); setPwdMsg({ type: "", text: "" }); }}
-              style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid #2D3A8C",
+              style={{
+                padding: "8px 14px", borderRadius: 8, border: "1px solid #2D3A8C",
                 background: "#fff", color: "#2D3A8C", fontSize: 12, fontWeight: 700,
-                cursor: "pointer", whiteSpace: "nowrap" }}>
+                cursor: "pointer", whiteSpace: "nowrap"
+              }}>
               CAMBIAR CONTRASEÑA
             </button>
           </div>
 
           <div style={{ background: "#fff", border: "1px solid #e5e9f5", borderRadius: 12, padding: "20px 24px" }}
             className="profile-action-card">
-            <div style={{ width: 40, height: 40, borderRadius: 10, background: "#fff5f5",
-              display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: 10, background: "#fff5f5",
+              display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0
+            }}>
               <LogOut size={18} style={{ color: "#ef4444" }} />
             </div>
             <div style={{ flex: 1 }}>
@@ -276,9 +282,11 @@ export default function ProfilePage() {
               <p style={{ margin: 0, fontSize: 12, color: "#888" }}>Desconectá este dispositivo.</p>
             </div>
             <button onClick={() => signOut({ callbackUrl: "/login" })}
-              style={{ padding: "8px 14px", borderRadius: 8, border: "none",
+              style={{
+                padding: "8px 14px", borderRadius: 8, border: "none",
                 background: "#ef4444", color: "#fff", fontSize: 12, fontWeight: 700,
-                cursor: "pointer", whiteSpace: "nowrap" }}>
+                cursor: "pointer", whiteSpace: "nowrap"
+              }}>
               CERRAR SESIÓN
             </button>
           </div>
@@ -287,8 +295,10 @@ export default function ProfilePage() {
 
       {/* Modal cambiar contraseña */}
       {pwdModal && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)",
-          display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)",
+          display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000
+        }}>
           <div style={{ background: "#fff", borderRadius: 12, width: "100%", maxWidth: 420, padding: 28, margin: 16 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
               <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#333" }}>Cambiar Contraseña</h3>
@@ -299,8 +309,8 @@ export default function ProfilePage() {
             </div>
             <form onSubmit={handleCambiarPassword} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {[
-                { key: "actual",    label: "Contraseña actual" },
-                { key: "nueva",     label: "Nueva contraseña" },
+                { key: "actual", label: "Contraseña actual" },
+                { key: "nueva", label: "Nueva contraseña" },
                 { key: "confirmar", label: "Confirmar nueva contraseña" },
               ].map(({ key, label }) => (
                 <div key={key}>
@@ -312,34 +322,44 @@ export default function ProfilePage() {
                       type={pwdVis[key] ? "text" : "password"}
                       value={pwd[key]}
                       onChange={e => setPwd(p => ({ ...p, [key]: e.target.value }))}
-                      style={{ width: "100%", padding: "9px 36px 9px 12px", borderRadius: 8,
-                        border: "1px solid #e5e9f5", fontSize: 13, boxSizing: "border-box", outline: "none" }}
+                      style={{
+                        width: "100%", padding: "9px 36px 9px 12px", borderRadius: 8,
+                        border: "1px solid #e5e9f5", fontSize: 13, boxSizing: "border-box", outline: "none"
+                      }}
                     />
                     <button type="button" onClick={() => setPwdVis(p => ({ ...p, [key]: !p[key] }))}
-                      style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
-                        background: "none", border: "none", cursor: "pointer", color: "#888" }}>
+                      style={{
+                        position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
+                        background: "none", border: "none", cursor: "pointer", color: "#888"
+                      }}>
                       {pwdVis[key] ? <EyeOff size={14} /> : <Eye size={14} />}
                     </button>
                   </div>
                 </div>
               ))}
               {pwdMsg.text && (
-                <div style={{ padding: "8px 12px", borderRadius: 8, fontSize: 12,
+                <div style={{
+                  padding: "8px 12px", borderRadius: 8, fontSize: 12,
                   background: pwdMsg.type === "ok" ? "#e6f4ea" : "#fee2e2",
-                  color: pwdMsg.type === "ok" ? "#1A7A3C" : "#ef4444" }}>
+                  color: pwdMsg.type === "ok" ? "#1A7A3C" : "#ef4444"
+                }}>
                   {pwdMsg.text}
                 </div>
               )}
               <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 4 }}>
                 <button type="button" onClick={() => setPwdModal(false)}
-                  style={{ padding: "8px 18px", borderRadius: 8, border: "1px solid #e5e9f5",
-                    background: "#fff", fontSize: 13, cursor: "pointer" }}>
+                  style={{
+                    padding: "8px 18px", borderRadius: 8, border: "1px solid #e5e9f5",
+                    background: "#fff", fontSize: 13, cursor: "pointer"
+                  }}>
                   Cancelar
                 </button>
                 <button type="submit" disabled={pwdSaving}
-                  style={{ padding: "8px 18px", borderRadius: 8, border: "none",
+                  style={{
+                    padding: "8px 18px", borderRadius: 8, border: "none",
                     background: pwdSaving ? "#aaa" : "#2D3A8C", color: "#fff",
-                    fontSize: 13, fontWeight: 600, cursor: pwdSaving ? "not-allowed" : "pointer" }}>
+                    fontSize: 13, fontWeight: 600, cursor: pwdSaving ? "not-allowed" : "pointer"
+                  }}>
                   {pwdSaving ? "Guardando..." : "Actualizar"}
                 </button>
               </div>
@@ -365,9 +385,11 @@ function FormField({ label, icon, value, onChange, type = "text" }) {
           type={type}
           value={value}
           onChange={e => onChange(e.target.value)}
-          style={{ width: "100%", padding: "9px 12px 9px 32px", borderRadius: 8,
+          style={{
+            width: "100%", padding: "9px 12px 9px 32px", borderRadius: 8,
             border: "1px solid #e5e9f5", fontSize: 13, color: "#1a1a2e",
-            background: "#fff", outline: "none", boxSizing: "border-box" }}
+            background: "#fff", outline: "none", boxSizing: "border-box"
+          }}
           onFocus={e => e.target.style.borderColor = "#2D3A8C"}
           onBlur={e => e.target.style.borderColor = "#e5e9f5"}
         />
